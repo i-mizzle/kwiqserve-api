@@ -39,7 +39,12 @@ import {
     updateTaxSettingsHandler 
 } from './controller/business-setting.controller';
 import { findBusinessSetting } from './service/business-setting.service';
-
+import { createTableHandler, getTableHandler, getTablesHandler, updateTableHandler } from './controller/table.controller';
+import { getTableSchema } from './schema/table.schema';
+import { deductFromCartHandler, getCartsHandler, getClientCartHandler, sendToCartHandler } from './controller/cart.controller';
+import { checkoutCartSchema, deductFromCartSchema, sendToCartSchema } from './schema/cart.schema';
+import { checkoutHandler } from './controller/checkout.controller';
+import { listBanksHandler, validateAccountNumberHandler } from './controller/utility.controller';
 
 export default function(app: Express) {
     app.get('/ping', (req: Request, res: Response) => res.sendStatus(200))
@@ -47,6 +52,16 @@ export default function(app: Express) {
     app.get("/utilities/business-setup-progress",
         requiresUser,
         businessSetupCompletionHandler
+    )
+
+    app.get("/utilities/banks",
+        requiresUser,
+        listBanksHandler
+    )
+
+    app.post("/utilities/validate-account",
+        requiresUser,
+        validateAccountNumberHandler
     )
 
     app.post('/onboarding/signup', 
@@ -277,20 +292,23 @@ export default function(app: Express) {
         requiresPermissions(['*', 'business.*', 'business.item-categories.*', 'business.item-categories.create']),
         createCategoryHandler
     )
+    
     // get all categories
-    app.get('/categories/:storeId',
+    app.get('/categories/:businessId',
         // requiresUser,
         // requiresAdministrator,
         // requiresPermissions(['can_manage_items']),
         getCategoriesHandler
     )
+
     // get all categories
-    app.delete('/categories/:categoryId',
+    app.delete('/categories/:categoryId', 
         requiresUser,
         requiresAdministrator,
         requiresPermissions(['can_manage_items']),
         deleteCategoryHandler
     )
+    
     // Items
     // create item
     app.post('/items',
@@ -308,7 +326,7 @@ export default function(app: Express) {
     )
 
     // fetch item details
-    app.get('/items/:itemId/:storeId',
+    app.get('/items/:itemId/:businessId',
         requiresUser,
         requiresPermissions(['*', 'business.*', 'business.items.*', 'business.items.read']),
         getItemHandler
@@ -329,11 +347,75 @@ export default function(app: Express) {
         deleteItemHandler
     )
 
+    // Tables
+    // create table
+    app.post('/tables',
+        requiresUser,
+        requiresPermissions(['*', 'business.*', 'business.tables.*', 'business.tables.create']),
+        validateRequest(createMenuSchema),
+        createTableHandler
+    )
+
+    // fetch menus
+    app.get('/tables',
+        requiresUser,
+        getTablesHandler
+    )
+
+    app.get('/tables/:tableId',
+        validateRequest(getTableSchema),
+        getTableHandler
+    )
+
+    app.patch('/tables/:tableId',
+        requiresUser,
+        requiresPermissions(['*', "business.*", 'business.tables.*', 'business.tables.update']),
+        updateTableHandler
+    )
+
+    app.delete('/tables/:tableId',
+        requiresUser,
+        requiresPermissions(['*', 'business.*', 'business.tables.*', 'business.tables.delete'])
+    )
+
+    // SHOPPING CARTS
+    
+    // fetch store shopping carts
+    app.get('/shopping-carts/:storeId',
+        requiresUser,
+        requiresAdministrator,
+        requiresPermissions(['can_manage_shopping_carts']),
+        getCartsHandler
+    )
+    
+    // fetch store shopping carts
+    app.get('/shopping-carts/:businessId/:clientId',
+        getClientCartHandler
+    )
+    
+    // send item to shopping cart
+    app.post('/shopping-carts/add/:businessId',
+        validateRequest(sendToCartSchema),
+        sendToCartHandler
+    )
+    
+    // send item to shopping cart
+    app.post('/shopping-carts/deduct/:storeId',
+        validateRequest(deductFromCartSchema),
+        deductFromCartHandler
+    )
+
+    // checkout shopping carts
+    app.post('/shopping-carts/:cartId/checkout',
+        validateRequest(checkoutCartSchema),
+        checkoutHandler
+    )
+
     // Menus
     // create menu
     app.post('/menus',
         requiresUser,
-        requiresPermissions(['*', 'business.*', 'business.items.*', 'business.items.delete']),
+        requiresPermissions(['*', 'business.*', 'business.items.*', 'business.items.create']),
         validateRequest(createMenuSchema),
         createMenuHandler
     )
@@ -341,7 +423,7 @@ export default function(app: Express) {
     // fetch business public menu
     app.get('/menus/public/:storeId',
         requiresAdministrator,
-        requiresPermissions(['*', 'menus.*', 'menus.read']),
+        requiresPermissions(['*', 'business.*', 'business.menus.*', 'menus.read']),
         getPublicMenuHandler
     )
 
@@ -358,7 +440,7 @@ export default function(app: Express) {
 
     // fetch menu details
     app.get('/menus/:menuId',
-        requiresUser,
+        // requiresUser,
         getMenuHandler
     )
 
@@ -399,7 +481,7 @@ export default function(app: Express) {
     // fetch orders
     app.get('/orders',
         requiresUser,
-        requiresAdministrator,
+        // requiresAdministrator,
         requiresPermissions(['*', 'business.*', 'business.orders.*', 'business.orders.read']),
         getOrdersHandler
     )

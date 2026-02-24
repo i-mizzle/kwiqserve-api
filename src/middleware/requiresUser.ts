@@ -24,7 +24,7 @@ const requiresUser = async (req: Request, res: Response, next: NextFunction) => 
         return response.forbidden(res, { message: 'Sorry, you must be logged in to access this resource', code: 'expired-token' })
     }
 
-    const userDetails = await findUser({_id: user['_id']}, 'stores.roles')
+    const userDetails = await findUser({_id: user['_id']}, 'businesses.roles')
 
     const session = await findSession({_id: user['session']})
 
@@ -42,6 +42,7 @@ const requiresUser = async (req: Request, res: Response, next: NextFunction) => 
         // const subscription = await findSubscription({business: currentStore._id, active: true}, 'subscriptionPlan')
         // req.storeSubscription = subscription || undefined
     }
+    // console.log(userDetails!.businesses)
 
     if(userDetails && userDetails.userType === 'user' && userDetails.businesses) {
         const userStore = userDetails.businesses.find(store => store.business.toString() === currentStore?._id.toString())

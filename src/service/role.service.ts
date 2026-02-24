@@ -14,7 +14,7 @@ export async function findRoles(
 ) {
     // return Role.find(query, {}, options).populate(expand)
 
-    const total = await Role.find().countDocuments()
+    const total = await Role.find(query).countDocuments()
     const roles = await Role.find(query, {}, options).populate(expand)
         .sort({ 'createdAt' : -1 })
         .skip((perPage * page) - perPage)

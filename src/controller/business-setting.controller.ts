@@ -60,6 +60,7 @@ export const addReceivingAccountHandler = async (req: Request, res: Response) =>
                 bankName: accountData.bankName || '',
                 accountNumber: accountData.accountNumber,
                 accountName: accountData.accountName,
+                preferredForRemittance: accountData.preferredForRemittance || false,
                 createdBy: userId,
                 ...paystackData
             });
@@ -252,13 +253,15 @@ export const updateReviewSettingsHandler = async (req: Request, res: Response) =
  */
 export const findBusinessSettingHandler = async (req: Request, res: Response) => {
     try {
+        const queryObject: any = req.query;
+        let expand = queryObject.expand || null
         const business = await findBusiness({ subdomain: req.businessSubdomain });
         
         if (!business) {
             return response.notFound(res, { message: 'business not found' });
         }
 
-        const businessSetting = await findBusinessSetting({ business: business._id });
+        const businessSetting = await findBusinessSetting({ business: business._id }, expand);
 
         if (!businessSetting) {
             return response.notFound(res, { message: 'business setting not found' });

@@ -5,12 +5,12 @@ import { BusinessDocument } from './business.model';
 export interface TableDocument extends mongoose.Document {
     name: string;
     code: string;
-    bussiness: BusinessDocument["_id"]
-    description: string;
+    business: BusinessDocument["_id"]
+    description?: string;
     deleted: boolean;
     menu: boolean;
     tableQrCode?: string;
-    tableUrl: string;
+    tableUrl?: string;
     createdBy: UserDocument["_id"]
     createdAt?: Date;
     updatedAt?: Date;
@@ -47,7 +47,6 @@ const TableSchema = new mongoose.Schema(
         },
         tableUrl: {
             type: String,
-            required: true
         },
         createdBy: {
             type: mongoose.Schema.Types.ObjectId, 

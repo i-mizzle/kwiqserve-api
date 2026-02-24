@@ -70,19 +70,23 @@ const parseUserFilters = (query: any) => {
 export async function signupHandler(req: Request, res: Response) {
     try {
         const existingUserByEmail = await findUser({ email: req.body.email })
-        const existingUserByPhone = await findUser({ phone: req.body.phone })
-
         if (existingUserByEmail) {
             return response.conflict(res, {message: 'email already registered'})
         }
 
+        const existingUserByPhone = await findUser({ phone: req.body.phone })
         if (existingUserByPhone) {
             return response.conflict(res, {message: 'phone number already registered'})
         }
 
+        const existingUserByUsername = await findUser({ phone: req.body.username })
+        if (existingUserByUsername) {
+            return response.conflict(res, {message: 'username already registered'})
+        }
+        
         const input = req.body
 
-        const user = await createUser(input)
+        const user = await createUser({...input, passwordChanged: true})
 
         // create business
         if(user) {
@@ -157,7 +161,7 @@ export async function createUserHandler(req: Request, res: Response) {
             // }
             const storeOwnerRole = await findRole({slug: 'store-owner'})
 
-            input.stores = [{
+            input.businesses = [{
                 business: req.currentBusiness?._id,
                 roles: input.roles && input.roles.length > 0 ? input.roles : [storeOwnerRole?._id]
             }]
@@ -281,7 +285,7 @@ export async function getUserProfileHandler (req: Request, res: Response) {
             expand = expand.split(',')
         }
 
-        const user = await findUser({_id: userId}, ['stores.store','stores.roles'])
+        const user = await findUser({_id: userId}, ['businesses.business','businesses.roles'])
 
         if(!user) {
             return response.notFound(res, {message: 'User not found'})
@@ -313,7 +317,7 @@ export async function getUserDetailsHandler (req: Request, res: Response) {
     try {
         const userId = get(req, 'params.userId');
 
-        const user = await findUser({_id: userId}, ['stores.roles', 'stores.store'])
+        const user = await findUser({_id: userId}, ['businesses.roles', 'businesses.business'])
 
         if(!user) {
             return response.notFound(res, {message: 'user not found'})
@@ -323,7 +327,7 @@ export async function getUserDetailsHandler (req: Request, res: Response) {
         
         if(req.currentBusiness) {
             const userStore = user.businesses?.find(store => store.business._id.toString() === req.currentBusiness._id.toString())       
-            returnUser = {...returnUser, ...{storeRoles: userStore?.roles}}
+            returnUser = {...returnUser, ...{businessRoles: userStore?.roles}}
             delete returnUser.businesses
 
         }
@@ -512,7 +516,7 @@ export async function getAllUsersHandler (req: Request, res: Response) {
             expand = expand.split(',')
         }
         
-        const users = await findAllUsers({...filters, ...{'stores.store': { $in: req.currentBusiness?._id } } }, resPerPage, page, expand);
+        const users = await findAllUsers({...filters, ...{'businesses.business': { $in: [req.currentBusiness?._id] } } }, resPerPage, page, expand);
     
         const responseObject = {
             page,

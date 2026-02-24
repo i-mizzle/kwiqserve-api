@@ -175,7 +175,7 @@ export const getBusinessesHandler = async (req: Request, res: Response) => {
             page,
             perPage: resPerPage,
             total: businesses.total,
-            businesss: businesses.businesses
+            business: businesses.businesses
         }
 
         return response.ok(res, responseObject)

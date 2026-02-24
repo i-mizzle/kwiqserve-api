@@ -80,8 +80,8 @@ export const WelcomeTemplate = (input: WelcomeMailParams) => {
     <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;"><td style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0;" valign="top"></td>
         <td class="container" width="600" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; display: block !important; max-width: 600px !important; clear: both !important; margin: 0 auto;" valign="top">
           <div class="content" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; max-width: 600px; display: block; margin: 0 auto; padding: 20px;">
-          <img src="https://res.cloudinary.com/dsdjt8qsv/image/upload/v1758270888/logo_rrtyoj.png" style="max-width: 100%; width: 150px; margin-bottom: 25px; margin-top: 15px;" />
-        `
+          `
+          // <img src="https://res.cloudinary.com/dsdjt8qsv/image/upload/v1758270888/logo_rrtyoj.png" style="max-width: 100%; width: 150px; margin-bottom: 25px; margin-top: 15px;" />
 
 emailTemplate += `
       <table class="main" width="100%" cellpadding="0" cellspacing="0" itemprop="action" itemscope itemtype="http://schema.org/ConfirmAction" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; border-radius: 3px; background-color: #fff; margin: 0; border: 1px solid #e9e9e9;" bgcolor="#fff">

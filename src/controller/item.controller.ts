@@ -50,7 +50,7 @@ export const createItemHandler = async (req: Request, res: Response) => {
         const userId = get(req, 'user._id');
         const body = req.body
 
-        const storeItems = await findItems({business: req.currentBusiness._id}, 0, 0, '')
+        // const storeItems = await findItems({business: req.currentBusiness._id}, 0, 0, '')
         // const maxCreatable = req.storeSubscription?.subscriptionPlan.thresholds.items 
 
         // if(maxCreatable > 0 && storeItems.total >= maxCreatable) {
@@ -59,12 +59,12 @@ export const createItemHandler = async (req: Request, res: Response) => {
 
         const itemPayload = {
             createdBy: userId,
-            business: body.store,
+            business: req.currentBusiness._id,
             sku: body.sku,
             name: body.name,
             category: body.category,
             description: body.description,
-            lowStockAlertCount: body?.lowStockAlertCount,
+            // lowStockAlertCount: body?.lowStockAlertCount,
             type: body.type,
             stockUnit: body?.stockUnit,
             currentStock: 0,
@@ -142,7 +142,7 @@ export const getItemsHandler = async (req: Request, res: Response) => {
 export const getItemHandler = async (req: Request, res: Response) => {
     try {
         const itemId = get(req, 'params.itemId');
-        const storeId = get(req, 'params.storeId');
+        const businessId = get(req, 'params.businessId');
         const queryObject: any = req.query;
         let expand = queryObject.expand || null
 
@@ -150,7 +150,7 @@ export const getItemHandler = async (req: Request, res: Response) => {
             expand = expand.split(',')
         }
 
-        const item = await findItem({ _id: itemId, business: storeId, deleted: false }, expand)
+        const item = await findItem({ _id: itemId, business: businessId, deleted: false }, expand)
 
         if(!item) {
             return response.notFound(res, {message: 'item not found'})

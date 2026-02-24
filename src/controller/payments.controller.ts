@@ -14,6 +14,7 @@ import { findCustomer } from "../service/customer.service";
 import { findBusinessSetting } from "../service/business-setting.service";
 import { sendTransferJob } from "../queues/transfer.queue";
 import moment from "moment";
+import { findCart } from "../service/cart.service";
 
 export const receivePaymentHandler = async (req: Request, res: Response) => {
     try {
@@ -64,41 +65,55 @@ export const receivePaymentHandler = async (req: Request, res: Response) => {
 export const initializePaymentHandler = async (req: Request, res: Response) => {
     try {
         const userId = get(req, 'user._id');
-        const invoiceCode = req.body.invoiceCode
+        // const invoiceCode = req.body.invoiceCode
+        console.log('subdomain --->', req.businessSubdomain)
         const currentStore = await findBusiness({subdomain: req.businessSubdomain})
         if(!currentStore) {
-            return response.notFound(res, {message: 'store not found'})
+            return response.notFound(res, {message: 'business not found'})
         }
-        const user = await findUser({_id: userId})
-        let userType = ""
-        if(user) {
-            userType = user.userType
-        }
+        // const user = await findUser({_id: userId})
+        // let userType = ""
+        // if(user) {
+        //     userType = user.userType
+        // }
 
         // let order: OrderDocument | null = null // await findInvoice({invoiceCode}, 'user')
         // let subscriptionPlan: SubscriptionPlanDocument | null = null
         // if(!req.body.subscriptionPlan){
-        const order = await findOrder({_id: req.body.order})
-        // }
+        let total = 0
+        let orderTotal = 0
 
-        // if(req.body.subscriptionPlan) {
-        //     subscriptionPlan = await findSubscriptionPlan({_id: req.body.subscriptionPlan})
-        // }
-        
-        if(!order) {
-            return response.notFound(res, {message: "order not found"})
+        if(req.body.order && req.body.order !== '') {
+            const order = await findOrder({_id: req.body.order})
+            
+            if(!order) {
+                return response.notFound(res, {message: "order not found"})
+            }
+
+            orderTotal = order.total
+        }
+
+        if(req.body.cart && req.body.cart !== ''){
+            const cart = await findCart({_id: req.body.cart})
+            
+            if(!cart) {
+                return response.notFound(res, {message: "cart not found"})
+            }
+
+            orderTotal = cart.total!
         }
 
         const transactionReference = generateCode(18, false)
         const transactionProcessor = req.body.paymentChannel === 'web' ? 'paystack' : 'cashier'
-        const fees = calculateFee(order.total)
-        const total = order.total + fees
+        const fees = calculateFee(orderTotal)
+        total = orderTotal + fees
 
         // CREATE TRANSACTION FIRST
         const newTransaction = await createTransaction({
             transactionReference,
             createdBy: userId,
             order: req.body.order, //invoice._id,
+            cart: req.body.cart, //invoice._id,
             amount: total,
             fees: fees,
             processor: transactionProcessor,

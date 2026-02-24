@@ -15,11 +15,6 @@ export interface BusinessDocument extends mongoose.Document {
     apiKey: string;
     state: string;
     logo?: string;
-    storeFront?: {
-        priceCardQrCode: string
-        priceCardUrl: string
-        storeFrontUrl: string
-    }
     createdAt?: Date;
     updatedAt?: Date;
     comparePassword(candidatePassword: string): Promise<boolean>
@@ -46,11 +41,11 @@ const BusinessSchema = new mongoose.Schema(
         },
         phone: {
             type: String,
-            required: true
+            // required: true
         },
         email: {
             type: String,
-            required: true
+            // required: true
         },
         city: {
             type: String,
@@ -70,17 +65,6 @@ const BusinessSchema = new mongoose.Schema(
         logo: {
             type: String
         },
-        storeFront: {
-            priceCardUrl: {
-                type: String
-            },
-            priceCardQrCode: {
-                type: String
-            },
-            storeFrontUrl: {
-                type: String
-            }
-        }
     },
     { timestamps: true }
 );

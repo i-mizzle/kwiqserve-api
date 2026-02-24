@@ -9,6 +9,7 @@ export interface BankAccountDocument extends mongoose.Document {
     accountNumber: string;
     accountName: string;
     createdBy: UserDocument["_id"];
+    preferredForRemittance: boolean
     paystackAccountId?: string    
     paystackRecipientCode?: string
     paystackIntegrationId?: string
@@ -37,6 +38,10 @@ const BankAccountSchema = new mongoose.Schema(
         accountName: {
             type: String,
             required: true
+        },
+        preferredForRemittance: {
+            type: Boolean,
+            default: false
         },
         createdBy: {
             type:  mongoose.Schema.Types.ObjectId, 

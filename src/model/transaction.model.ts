@@ -2,10 +2,12 @@ import mongoose from "mongoose";
 import { UserDocument } from "./user.model";
 import { OrderDocument } from "./order.model";
 import { BusinessDocument } from "./business.model";
+import { CartDocument } from "./cart.model";
 
 export interface TransactionDocument extends mongoose.Document {
   createdBy?: UserDocument["_id"];
   order?: OrderDocument["_id"];
+  cart?: CartDocument["_id"];
   business: BusinessDocument["_id"];
   transactionReference: string;
   receivingChannel?: any;
@@ -39,6 +41,10 @@ const TransactionSchema = new mongoose.Schema(
     order: {
       type: mongoose.Schema.Types.ObjectId, 
       ref: 'Order',
+    },
+    cart: {
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Cart',
     },
     createdBy: { 
         type: mongoose.Schema.Types.ObjectId, 

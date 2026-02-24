@@ -20,10 +20,12 @@ interface NewTransactionInput {
 
 export const initiateTransaction = async (input: NewTransactionInput) => {
     try {
+        console.log('paystack input ---> ', input)
         const payload = {
             email: input.email,
             amount: input.amount * 100,
-            channels: ["card", "bank", "apple_pay", "ussd", "qr", "bank_transfer"],
+            channels: ["card", "bank"],
+            // channels: ["card", "bank", "apple_pay", "ussd", "qr", "bank_transfer"],
             callback_url: input.callbackUrl,
             metadata: JSON.stringify({
                 scanServeRef: input.reference
@@ -218,6 +220,33 @@ export const chargeAuthorization = async (input: ChargeAuthorizationInput) => {
         return response
     } catch (error: any) {
         console.log(error)
+        throw new Error(error);
+    }
+}
+
+
+interface validateAccountNumberInput {
+    accountNumber: string;
+    bankCode: string;
+    // amount: number;
+}
+
+export const validateAccountNumber = async (input: validateAccountNumberInput) => {
+    try {
+        const response = await axios.get(`${process.env.PAYSTACK_BASE_URL}/bank/resolve?account_number=${input.accountNumber}&bank_code=${input.bankCode}`, { headers })
+        return response
+    } catch (error: any) {
+        console.log(error)
+        throw new Error(error);
+    }
+}
+
+export const listBanks = async () => {
+    try {   
+        const response = await axios.get(`${process.env.PAYSTACK_BASE_URL}/bank`, { headers })
+        return response
+    } catch (error: any) {
+        console.log('---> ', error.response.data)
         throw new Error(error);
     }
 }

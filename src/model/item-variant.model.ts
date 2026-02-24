@@ -19,6 +19,7 @@ export interface ItemVariantDocument extends mongoose.Document {
     recipe: Recipe[]
     deleted: boolean
     noStock: boolean
+    available: boolean
     hasInHouseRecipe: boolean
     createdAt?: Date;
     updatedAt?: Date;
@@ -53,14 +54,14 @@ const ItemVariantSchema = new mongoose.Schema(
             type: String,
             required: true
         },
-        lowStockAlertCount: {
-            type: Number,
-            required: true
-        },
-        currentStock: {
-            type: Number,
-            default: 0
-        },
+        // lowStockAlertCount: {
+        //     type: Number,
+        //     required: true
+        // },
+        // currentStock: {
+        //     type: Number,
+        //     default: 0
+        // },
         deleted: {
             type: Boolean,
             default: false
@@ -71,7 +72,11 @@ const ItemVariantSchema = new mongoose.Schema(
         },
         noStock: {
             type: Boolean,
-            default: false
+            default: true
+        },
+        available:{
+            type: Boolean,
+            default: true
         },
         recipe: [
             {

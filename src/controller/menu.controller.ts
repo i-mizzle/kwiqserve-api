@@ -56,7 +56,7 @@ export const createMenuHandler = async (req: Request, res: Response) => {
             }
         }
 
-        const menu = await createMenu({...body, ...{createdBy: userId}})
+        const menu = await createMenu({...body, ...{createdBy: userId, business: req.currentBusiness._id}})
         
         return response.created(res, menu)
         // return response.created(res, {...item, ...{variants: variants}})
@@ -127,10 +127,15 @@ export const getPublicMenuHandler = async (req: Request, res: Response) => {
 export const getMenuHandler = async (req: Request, res: Response) => {
     try {
         const menuId = get(req, 'params.menuId');
-        const userId = get(req, 'user._id');
-        const user = await findUser({_id: userId}) 
-        if(!user) {
-            return response.notFound(res, {message: 'user not found'})
+        // const userId = get(req, 'user._id');
+        // const user = await findUser({_id: userId}) 
+        // if(!user) {
+        //     return response.notFound(res, {message: 'user not found'})
+        // }
+        console.log(req.businessSubdomain)
+        const business = await findBusiness({subdomain: req.businessSubdomain})
+        if(!business) {
+            return response.notFound(res, {message: 'business not found'})
         }
 
         const queryObject: any = req.query;
@@ -140,7 +145,7 @@ export const getMenuHandler = async (req: Request, res: Response) => {
             expand = expand.split(',')
         }
 
-        const menu = await findMenu({ _id: menuId, business: req.currentBusiness?._id, deleted: false }, expand)
+        const menu = await findMenu({ _id: menuId, business: business._id, deleted: false }, expand)
 
         if(!menu) {
             return response.notFound(res, {message: 'menu not found'})

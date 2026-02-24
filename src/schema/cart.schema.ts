@@ -3,6 +3,7 @@ import { object, string, ref, number, boolean, array } from "yup";
 export const sendToCartSchema = object({
     body: object({
         clientId: string().required('clientId is required'),
+        table: string().required('table is required'),
         item: object({
             item: string().required('items.item is required'),
             parentItem: string().required('items.parentItem is required'),
@@ -13,7 +14,7 @@ export const sendToCartSchema = object({
         }),
     }),
     params: object({
-        storeId: string().required('store id is required as a path param')
+        businessId: string().required('business id is required as a path param')
     })
 });
 
@@ -24,7 +25,7 @@ export const deductFromCartSchema = object({
         quantity: number().required('item.quantity is required')
     }),
     params: object({
-        storeId: string().required('store id is required as a path param')
+        storeId: string().required('business id is required as a path param')
     })
 });
 

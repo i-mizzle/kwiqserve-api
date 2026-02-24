@@ -1,11 +1,11 @@
 export const accountPermissionsList = {
     sections: [      
       {
-        title: 'Full Store Management',
+        title: 'Full business Management',
         permissions: [
           {
-            label: `All actions in the context of this store. Selecting this permission means the any user with this role has no limits in this store and you don't need to select any other permissions below`,
-            value: 'store.*',
+            label: `All actions in the context of this business. Selecting this permission means the any user with this role has no limits in this business and you don't need to select any other permissions below`,
+            value: 'business.*',
             selected: false
           }
         ]
@@ -15,77 +15,77 @@ export const accountPermissionsList = {
         permissions: [
           {
             label: 'All audit logs actions',
-            value: 'store.audit-logs.*',
+            value: 'business.audit-logs.*',
             selected: false
           },
           {
             label: 'See all audit logs',
-            value: 'store.audit-logs.read',
+            value: 'business.audit-logs.read',
             selected: false
           },
         ]
       },       
       {
-        title: 'Price cards',
+        title: 'Menus',
         permissions: [
           {
-            label: 'All price cards actions',
-            value: 'store.price-cards.*',
+            label: 'All menus actions',
+            value: 'business.menus.*',
             selected: false
           },
           {
-            label: 'Create price cards',
-            value: 'store.price-cards.create',
+            label: 'Create menus',
+            value: 'business.menus.create',
             selected: false
           },
           {
-            label: 'See all price cards',
-            value: 'store.price-cards.read',
+            label: 'See all menus',
+            value: 'business.menus.read',
             selected: false
           },
           {
-            label: 'Update price cards',
-            value: 'store.price-cards.update',
+            label: 'Update menus',
+            value: 'business.menus.update',
             selected: false
           },
           {
-            label: 'Delete price cards',
-            value: 'store.price-cards.delete',
+            label: 'Delete menus',
+            value: 'business.menus.delete',
             selected: false
           },
         ]
       },
       {
-        title: 'Inventory',
+        title: 'Orders',
         permissions: [
           {
-            label: 'All inventory actions',
-            value: 'store.inventory.*',
+            label: 'All orders actions',
+            value: 'business.orders.*',
             selected: false
           },
           {
-            label: 'Create inventory items',
-            value: 'store.inventory.create',
+            label: 'Create orders items',
+            value: 'business.orders.create',
             selected: false
           },
           {
-            label: 'List all inventory items',
-            value: 'store.inventory.read',
+            label: 'List all orders items',
+            value: 'business.orders.read',
             selected: false
           },
           {
-            label: 'Update inventory',
-            value: 'store.inventory.update',
+            label: 'Update orders',
+            value: 'business.orders.update',
             selected: false
           },
           {
-            label: 'Approve inventory updates',
-            value: 'store.inventory.approvals',
+            label: 'Approve orders updates',
+            value: 'business.orders.approvals',
             selected: false
           },
           {
-            label: 'Delete inventory',
-            value: 'store.inventory.delete',
+            label: 'Delete orders',
+            value: 'business.orders.delete',
             selected: false
           },
         ]
@@ -95,27 +95,52 @@ export const accountPermissionsList = {
         permissions: [
           {
             label: 'All payments actions',
-            value: 'store.payments.*',
+            value: 'business.payments.*',
             selected: false
           },
           {
             label: 'Create payments',
-            value: 'store.payments.create',
+            value: 'business.payments.create',
             selected: false
           },
           {
             label: 'Read all payments',
-            value: 'store.payments.read',
+            value: 'business.payments.read',
             selected: false
           },
           {
             label: 'Update payments',
-            value: 'store.payments.update',
+            value: 'business.payments.update',
             selected: false
           },
           {
             label: 'Delete payments',
-            value: 'store.payments.delete',
+            value: 'business.payments.delete',
+            selected: false
+          },
+        ]
+      },
+      {
+        title: 'Reports',
+        permissions: [
+          {
+            label: 'All business reports',
+            value: 'business.reports.*',
+            selected: false
+          },
+          {
+            label: 'Tables reports',
+            value: 'business.reports.tables',
+            selected: false
+          },
+          {
+            label: 'Financial reports',
+            value: 'business.reports.financial',
+            selected: false
+          },
+          {
+            label: 'Orders reports',
+            value: 'business.reports.orders',
             selected: false
           },
         ]
@@ -125,27 +150,57 @@ export const accountPermissionsList = {
         permissions: [
           {
             label: 'All roles actions',
-            value: 'store.roles.*',
+            value: 'business.roles.*',
             selected: false
           },
           {
             label: 'Create roles',
-            value: 'store.roles.create',
+            value: 'business.roles.create',
             selected: false
           },
           {
             label: 'Read all roles',
-            value: 'store.roles.read',
+            value: 'business.roles.read',
             selected: false
           },
           {
             label: 'Update roles',
-            value: 'store.roles.update',
+            value: 'business.roles.update',
             selected: false
           },
           {
             label: 'Delete roles',
-            value: 'store.roles.delete',
+            value: 'business.roles.delete',
+            selected: false
+          },
+        ]
+      },
+      {
+        title: 'Tables',
+        permissions: [
+          {
+            label: 'All tables actions',
+            value: 'business.tables.*',
+            selected: false
+          },
+          {
+            label: 'Create tables',
+            value: 'business.tables.create',
+            selected: false
+          },
+          {
+            label: 'List all tables',
+            value: 'business.tables.read',
+            selected: false
+          },
+          {
+            label: 'Update tables',
+            value: 'business.tables.update',
+            selected: false
+          },
+          {
+            label: 'Delete tables',
+            value: 'business.tables.delete',
             selected: false
           },
         ]
@@ -155,12 +210,12 @@ export const accountPermissionsList = {
         permissions: [
           {
             label: 'All user actions',
-            value: 'store.users.*',
+            value: 'business.users.*',
             selected: false
           },
           {
             label: 'Create user',
-            value: 'store.users.create',
+            value: 'business.users.create',
             selected: false
           },
           {
@@ -170,12 +225,12 @@ export const accountPermissionsList = {
           },
           {
             label: 'Update users',
-            value: 'store.users.update',
+            value: 'business.users.update',
             selected: false
           },
           {
             label: 'Delete users',
-            value: 'store.users.delete',
+            value: 'business.users.delete',
             selected: false
           },
         ]

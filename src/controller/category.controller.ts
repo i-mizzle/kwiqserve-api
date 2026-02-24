@@ -48,7 +48,7 @@ export const createCategoryHandler = async (req: Request, res: Response) => {
 
 export const getCategoriesHandler = async (req: Request, res: Response) => {
     try {
-        const storeId = get(req, 'params.storeId');
+        const businessId = get(req, 'params.businessId');
         const queryObject: any = req.query;
         const filters = parseCategoryFilters(queryObject)
         const resPerPage = +queryObject.perPage || 25; 
@@ -59,7 +59,7 @@ export const getCategoriesHandler = async (req: Request, res: Response) => {
             expand = expand.split(',')
         }
 
-        const categories = await findCategories( {...filters, ...{ deleted: false, business: storeId }}, 0, 0, expand)
+        const categories = await findCategories( {...filters, ...{ deleted: false, business: businessId }}, 0, 0, expand)
         // return res.send(post)
 
         const categoriesWithItemsCount: any = await Promise.all(categories.categories.map(async (category) => {

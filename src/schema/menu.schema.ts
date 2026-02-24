@@ -1,4 +1,4 @@
-import { object, string, ref, number, boolean, array } from "yup";
+import { object, string, number, boolean, array } from "yup";
 
 export const createMenuSchema = object({
     body: object({
@@ -8,9 +8,10 @@ export const createMenuSchema = object({
         items: array(object({
             item: string().required('items.item is required'),
             displayName: string().required('items.displayName is required'),
-            fixedPricing: boolean().required('items.fixedPricing is required as a boolean'),
+            fixedPricing: boolean(),
             price: number(),
-            parentItemCategories: array(string())
+            parentItemCategories: array(string()),
+            inStock: boolean()
         })),
     })
 });

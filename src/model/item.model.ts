@@ -49,7 +49,7 @@ export interface ItemDocument extends mongoose.Document {
     name: string
     category: CategoryDocument['_id'][],
     description: string
-    lowStockAlertCount: number
+    // lowStockAlertCount: number
     type: string
     barcodes?: string[],
     inventoryType: string
@@ -85,10 +85,10 @@ const ItemSchema = new mongoose.Schema(
             type: String,
             enum: ['stock', 'pre-order']
         },
-        lowStockAlertCount: {
-            type: Number,
-            default: 0
-        },
+        // lowStockAlertCount: {
+        //     type: Number,
+        //     default: 0
+        // },
         type: {
             type: String,
             enum: ['store', 'sale'],

@@ -48,29 +48,33 @@ const parseTableFilters = (query: any) => {
 }
 
 export async function createTableHandler (req: Request, res: Response) {
-    const userId = get(req, 'user._id')
-    const body = req.body
-
-    // const business = 
-
-    const table = await createTable({ ...body, ...{createdBy: userId, slug: slugify(body.name), business: req.currentBusiness?._id} })
-    // const tableQRCode = 
-    await sendQrCodeJob({
-        tableId: table._id.toString(),
-        data: {
-            tableUrl: `https://${req.businessSubdomain}.scanserve.cloud/tables/${table._id}`
-        }
-    })
-    // return res.send(post)
-    await createAuditLog({
-        actionType: 'create',
-        description: `created table ${body.name}`,
-        actor: userId,
-        item: table._id,
-        requestPayload: body,
-        responseObject: table
-    })
-    return response.created(res, table)
+    try {
+        const userId = get(req, 'user._id')
+        const body = req.body
+    
+        // const business = 
+    
+        const table = await createTable({ ...body, ...{createdBy: userId, slug: slugify(body.name), business: req.currentBusiness?._id} })
+        // const tableQRCode = 
+        await sendQrCodeJob({
+            tableId: table._id.toString(),
+            data: {
+                tableUrl: `https://${req.businessSubdomain}.scanserve.cloud/tables/${table._id}`
+            }
+        })
+        // return res.send(post)
+        await createAuditLog({
+            actionType: 'create',
+            description: `created table ${body.name}`,
+            actor: userId,
+            item: table._id,
+            requestPayload: body,
+            responseObject: table
+        })
+        return response.created(res, table)
+    } catch (error:any) {
+        return response.error(res, error)
+    }
 }
 
 export const getTablesHandler = async (req: Request, res: Response) => {
@@ -102,59 +106,74 @@ export const getTablesHandler = async (req: Request, res: Response) => {
 }
 
 export async function getTableHandler (req: Request, res: Response) {
-    const tableId = get(req, 'params.tableId');
-    const queryObject: any = req.query;
-    let expand = queryObject.expand || null
-
-    if(expand && expand.includes(',')) {
-        expand = expand.split(',')
+    try {
+        const tableId = get(req, 'params.tableId');
+        const queryObject: any = req.query;
+        let expand = queryObject.expand || null
+    
+        if(expand && expand.includes(',')) {
+            expand = expand.split(',')
+        }
+        const table = await findTable({ _id: tableId, deleted: false}, expand);
+        if(!table) {
+            return response.notFound(res, { message: `table was not found` })
+        } 
+        return response.ok(res, table)
+        
+    } catch (error:any) {
+        return response.error(res, error)
     }
-    const table = await findTable({ _id: tableId, deleted: false}, expand);
-    if(!table) {
-        return response.notFound(res, { message: `table was not found` })
-    } 
-    return response.ok(res, table)
 }
 
 export async function updateTableHandler (req: Request, res: Response) {
-    const tableId = get(req, 'params.tableId');
-    const userId = get(req, 'user._id');
-    const updateQuery = req.body
-    const table = await findTable({ _id: tableId }, '');
-    if (!table) {
-        return response.notFound(res, { message: `table not found` })
-    }
-
-    const updated = await findAndUpdateTable({ _id: tableId }, updateQuery, {new: true});
+    try {
+        const tableId = get(req, 'params.tableId');
+        const userId = get(req, 'user._id');
+        const updateQuery = req.body
+        const table = await findTable({ _id: tableId }, '');
+        if (!table) {
+            return response.notFound(res, { message: `table not found` })
+        }
     
-    await createAuditLog({
-        actionType: 'update',
-        description: `update table ${table.name}`,
-        actor: userId,
-        item: tableId,
-        requestPayload: {...req.params, ...updateQuery},
-        responseObject: {message: 'table updated successfully', table: updated}
-    })
-    return response.ok(res, {message: 'table updated successfully', table: updated});
+        const updated = await findAndUpdateTable({ _id: tableId }, updateQuery, {new: true});
+        
+        await createAuditLog({
+            actionType: 'update',
+            description: `update table ${table.name}`,
+            actor: userId,
+            item: tableId,
+            requestPayload: {...req.params, ...updateQuery},
+            responseObject: {message: 'table updated successfully', table: updated}
+        })
+        return response.ok(res, {message: 'table updated successfully', table: updated});
+        
+    } catch (error:any) {
+        return response.error(res, error)
+    }
 }
 
 export async function deleteTableHandler (req: Request, res: Response) {
-    const tableId = get(req, 'params.tableId');
-    const userId = get(req, 'user._id');
-
-    const table = await findTable({ _id: tableId }, '');
-    if (!table) {
-        return response.notFound(res, { message: `table not found` })
+    try {
+        const tableId = get(req, 'params.tableId');
+        const userId = get(req, 'user._id');
+    
+        const table = await findTable({ _id: tableId }, '');
+        if (!table) {
+            return response.notFound(res, { message: `table not found` })
+        }
+    
+        await findAndUpdateTable({ _id: tableId }, {deleted: true}, {new: true});
+        await createAuditLog({
+            actionType: 'delete',
+            description: `delete table ${table.name}`,
+            actor: userId,
+            item: tableId,
+            requestPayload: req.params,
+    
+        })
+        return response.ok(res, {message: 'table deleted successfully'});
+        
+    } catch (error:any) {
+        return response.error(res, error)
     }
-
-    await findAndUpdateTable({ _id: tableId }, {deleted: true}, {new: true});
-    await createAuditLog({
-        actionType: 'delete',
-        description: `delete table ${table.name}`,
-        actor: userId,
-        item: tableId,
-        requestPayload: req.params,
-
-    })
-    return response.ok(res, {message: 'table deleted successfully'});
 }

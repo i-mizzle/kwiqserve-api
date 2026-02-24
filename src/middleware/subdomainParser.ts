@@ -10,6 +10,7 @@ declare global {
 
 export const subdomainParser = (req: Request, res: Response, next: NextFunction) => {
   const hostHeader = (req.headers['x-original-host'] as string) || req.headers.host;
+  // console.log('host header', hostHeader)
   // If it's localhost, just skip
   if (hostHeader?.startsWith('localhost')) {
     return next();

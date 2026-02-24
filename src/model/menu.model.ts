@@ -11,6 +11,7 @@ export interface MenuItem {
     parentItemCategory: CategoryDocument['_id']
     displayName: string
     price: number
+    inStock: boolean
 }
 
 export interface MenuDocument extends mongoose.Document {
@@ -68,6 +69,10 @@ const MenuSchema = new mongoose.Schema(
                 },
                 price: {
                     type: Number,
+                },
+                inStock: {
+                    type: Boolean,
+                    default: true
                 }
             }
         ],

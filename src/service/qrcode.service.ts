@@ -13,7 +13,7 @@ cloudinary.v2.config({
 
 export const generateAndUploadQRCode = async (tableId: string, data: {tableUrl: string}) => {
   try {
-    console.log('generateAndUploadQRCode received storeId:', tableId, 'type:', typeof tableId)
+    console.log('generateAndUploadQRCode received tableId:', tableId, 'type:', typeof tableId)
 
     if (!mongoose.Types.ObjectId.isValid(tableId)) {
       throw new Error('Invalid tableId passed to QR generator: ' + tableId)
@@ -38,27 +38,25 @@ export const generateAndUploadQRCode = async (tableId: string, data: {tableUrl: 
     })
 
     // update store
-    const updatedStore = await findAndUpdateTable(
+    const updatedTable = await findAndUpdateTable(
       { _id: objectId },
       {
-        storeFront: {
-            tableUrl: data.tableUrl,
-            tableQrCOde: uploadResponse.secure_url
-        }
+        tableUrl: data.tableUrl,
+        tableQrCode: uploadResponse.secure_url
       },
       { new: true }
     )
 
-    if (!updatedStore || (updatedStore as any).error) {
+    if (!updatedTable || (updatedTable as any).error) {
       console.error('findAndUpdateStore returned null or error for id:', tableId)
-      throw new Error('Store not found or error when updating QR code (id: ' + tableId + ')')
+      throw new Error('table not found or error when updating QR code (id: ' + tableId + ')')
     }
 
     // Only log _id if it exists
-    if ((updatedStore as any)._id) {
-      console.log('store updated OK:', (updatedStore as any)._id)
+    if ((updatedTable as any)._id) {
+      console.log('table updated OK:', (updatedTable as any)._id)
     } else {
-      console.log('store updated OK, but _id not present:', updatedStore)
+      console.log('table updated OK, but _id not present:', updatedTable)
     }
     return uploadResponse.secure_url
   } catch (err) {
