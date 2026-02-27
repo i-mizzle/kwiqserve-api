@@ -5,16 +5,17 @@ import { createTransaction, findAndUpdateTransaction, findTransaction, findTrans
 import { addDays, calculateFee, calculateTransferFee, generateCode } from "../utils/utils";
 import config from 'config';
 import { findUser } from "../service/user.service";
-import { findAndUpdateOrder, findOrder } from "../service/order.service";
-import { initiateTransaction, verifyTransaction } from "../service/integrations/paystack.service";
+import { createOrder, findAndUpdateOrder, findOrder } from "../service/order.service";
+import { initiateTransaction, NewTransactionInput, verifyTransaction } from "../service/integrations/paystack.service";
 import { OrderDocument } from "../model/order.model";
 import { findBusiness } from "../service/business.service";
 import websocketService from "../service/websocket.service";
-import { findCustomer } from "../service/customer.service";
+import { createCustomer, findCustomer } from "../service/customer.service";
 import { findBusinessSetting } from "../service/business-setting.service";
 import { sendTransferJob } from "../queues/transfer.queue";
 import moment from "moment";
-import { findCart } from "../service/cart.service";
+import { findAndUpdateCart, findCart } from "../service/cart.service";
+import { DocumentDefinition } from "mongoose";
 
 export const receivePaymentHandler = async (req: Request, res: Response) => {
     try {
@@ -93,13 +94,15 @@ export const initializePaymentHandler = async (req: Request, res: Response) => {
             orderTotal = order.total
         }
 
+        let cartSourceMenu = null
+
         if(req.body.cart && req.body.cart !== ''){
-            const cart = await findCart({_id: req.body.cart})
+            const cart = await findCart({_id: req.body.cart}, 'table')
             
             if(!cart) {
                 return response.notFound(res, {message: "cart not found"})
             }
-
+            cartSourceMenu = cart.table.menu
             orderTotal = cart.total!
         }
 
@@ -118,15 +121,35 @@ export const initializePaymentHandler = async (req: Request, res: Response) => {
             fees: fees,
             processor: transactionProcessor,
             channel: req.body.paymentChannel,
-            business: currentStore._id
+            business: currentStore._id,
+            meta: {
+                sourceMenu: cartSourceMenu
+            }
         })
 
-        const input = {
+        const input: NewTransactionInput = {
             reference: newTransaction.transactionReference,
             amount: newTransaction.amount, //order!.amount,
             email: req.body.customer.email,
+            firstName: req.body.customer.name.split(' ')[0],
+            lastName: req.body.customer.name.split(' ')[1],
+            phone: req.body.customer.phone,
             callbackUrl: req.body.callbackUrl
         }
+
+        // find the business settings and add a split to the transaction input if the business prefers next day settlement
+        const businessSettings = await findBusinessSetting({business: currentStore._id}, 'receivingAccounts.account')
+        if (businessSettings && businessSettings.settlements?.preferred === 'next-working-day') {
+            const transferAccount = businessSettings.receivingAccounts?.find(acc => acc.preferredForRemittance === true)
+            if(!transferAccount) {
+                return
+            }
+
+            input.subAccount = transferAccount.account.paystackRecipientCode
+            input.mainAccountFunds = fees
+            input.chargeBearer = 'subaccount'
+        }
+
 
         const purchaseObject = await initiateTransaction(input) as { data: any }
         console.log('payment init data -> ', purchaseObject)
@@ -139,63 +162,125 @@ export const initializePaymentHandler = async (req: Request, res: Response) => {
 
 export const verifyTransactionHandler = async (req: Request, res: Response) => {
     try {
+        const currentStore = await findBusiness({subdomain: req.businessSubdomain})
+        if(!currentStore) {
+            return response.notFound(res, {message: 'business not found'})
+        }
         
         const transactionReference = get(req, 'params.paystackReference');
         const input = {
             reference: transactionReference
         }
         const verification = await verifyTransaction(input)
-        console.log('---> ---> ', verification)
+        // console.log('---> ---> ', verification)
         
         if (verification.error) {
             return response.handleErrorResponse(res, verification)
         } else {
             const verificationData: any = verification.data.data
-            const transaction = await findTransaction({transactionReference: verificationData.metadata.scanserveRef}, 'order')
+            const transaction = await findTransaction({transactionReference: verificationData.metadata.scanServeRef}, ['order','cart'])
             if(!transaction) {
                 return response.notFound(res, {message: 'invoice transaction not found'})
             }
 
-            const customer = await findCustomer({_id: transaction.order.customer})
-
-            if(!customer) {
-                return response.error(res, {message: 'customer not found'})
+            if(transaction.processorData && transaction.processorData.id) {
+                // transaction is already verified and processed, return from here
+                return response.ok(res, {
+                    verification: verificationData, 
+                    order: transaction.order
+                })
             }
             
+            // create customer and append to order
+            let customer = await findCustomer({
+                business: currentStore._id,
+                email: verificationData.customer.email
+            })
+
+            if(!customer) {
+                customer = await createCustomer({
+                    business: currentStore._id,
+                    name: verificationData.metadata.first_name + ' ' + verificationData.metadata.last_name,
+                    email: verificationData.customer.email,
+                    phone: verificationData.metadata.customer_phone
+                })
+            }
+                      
             // update the transaction
             const transactionStatus = verificationData.status
 
-            const updateObject = {
+            const updateObject: any = {
                 status: transactionStatus === 'success' ? 'successful' : transactionStatus,
                 processorData: verificationData,
                 processorTransactionId: verificationData.reference
             }
 
+
+            let newOrder: DocumentDefinition<OrderDocument> | null = null
+
+            // if there's a cart in the transaction - use the cart data to create the order
+            if(transaction.cart) {
+                // const cart = await findCart({_id: transaction.cart._id})
+
+                await findAndUpdateCart({_id: transaction.cart._id}, {checkoutStatus: 'checked_out'}, {new: true})
+                
+                const orderRef = generateCode(12, true).toUpperCase()
+                // create order pulling cart items and total price and set payment status to pending
+                const orderPayload: any = {
+                    alias: `web-order-${transaction.cart._id}`,
+                    source: 'online',
+                    items: transaction.cart.items,
+                    total: transaction.amount,
+                    status: 'pending',
+                    paymentStatus: 'paid',
+                    orderRef,
+                    sourceMenu: transaction.meta!.sourceMenu,
+                    business: transaction.business,
+                    cart: transaction.cart._id,
+                    table: transaction.cart.table,
+                    // orderBy: body.orderBy,
+                    // deliveryType: body.deliveryType,
+                    // deliveryAddress: body.deliveryAddress,
+                    paymentMethod: 'online',
+                    customer: customer._id
+                    // vat: orderTotal(cart.items, storeSettings).vat
+                }
+
+                newOrder = await createOrder(orderPayload)
+
+                if(newOrder) {
+                    updateObject.order = newOrder._id
+                }
+            }
+
             await findAndUpdateTransaction({ _id: transaction._id }, updateObject, { new: true })
 
-            // find order and update payment status to paid
-            await findAndUpdateOrder({_id: transaction.order._id}, {paymentStatus: 'paid'}, {new: true})
+            if(transaction.order) {
+                // find order and update payment status to paid
+                await findAndUpdateOrder({_id: transaction.order._id}, {paymentStatus: 'paid'}, {new: true})
+            }
+
 
             // TODO: Send order receipt to the customer
 
-            if (req.currentBusiness) {
+            if (currentStore) {
                 // Send real-time notification to business about new order
                 websocketService.sendToBusiness(
-                    req.currentBusiness._id.toString(),
+                    currentStore._id.toString(),
                     'order:new',
                     {
-                        orderId: transaction.order._id,
-                        orderRef: transaction.order.orderRef,
-                        total: transaction.order.total,
+                        orderId: transaction?.order?._id || newOrder?._id,
+                        orderRef: transaction?.order?.orderRef || newOrder?.orderRef,
+                        total: transaction?.order?.total || newOrder?.total,
                         status: 'paid',
                         customerName: customer.name,
-                        table: transaction.order.table,
-                        createdAt: transaction.order.createdAt
+                        table: transaction?.order?.table || newOrder?.table,
+                        createdAt: transaction.order?.createdAt || newOrder?.createdAt
                     }
                 );
 
                 // if the business prefers real tiime settlements, send a transfer
-                const businessSettings = await findBusinessSetting({business: req.currentBusiness._id}, 'receivingAccounts.account')
+                const businessSettings = await findBusinessSetting({business: currentStore._id}, 'receivingAccounts.account')
                 if (businessSettings && businessSettings.settlements?.preferred === 'instant') {
                     const transferAccount = businessSettings.receivingAccounts?.find(acc => acc.preferredForRemittance === true)
                     if(!transferAccount) {
@@ -216,11 +301,12 @@ export const verifyTransactionHandler = async (req: Request, res: Response) => {
 
             return response.ok(res, {
                 verification: verificationData, 
-                order: transaction.order
+                order: transaction.order || newOrder
             })
         }
         
     } catch (error) {
+        console.log(error)
         return response.error(res, error)
     }
 }
@@ -239,16 +325,7 @@ export const paystackWebhookHandler = async (req: Request, res: Response) => {
             return response.error(res, {message: 'transaction not found'})
         }
         
-        // update the transaction
-        const transactionStatus = req.body.data.status.toUpperCase()
-        const channelResponse = req.body.data
-
-        const updateObject = {
-            status: transactionStatus,
-            processorData: channelResponse
-        }
-
-        await findAndUpdateTransaction({ _id: transaction._id }, updateObject, { new: true })
+        // TODO: Process the transaction same way as in the verifyTransactionHandler
 
         return response.ok(res, {data:'Transaction updated successfully'})
     } catch (error) {

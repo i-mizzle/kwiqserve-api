@@ -35,7 +35,7 @@ export async function createTransaction (input: DocumentDefinition<TransactionDo
 
 export async function findTransaction(
     query: FilterQuery<TransactionDocument>,
-    expand: string,
+    expand: string | string[],
     options: QueryOptions = { lean: true }
 ) {
     const transaction = Transaction.findOne(query, {}, options).populate(expand)

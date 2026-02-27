@@ -3,6 +3,7 @@ import { UserDocument } from "./user.model";
 import { OrderDocument } from "./order.model";
 import { BusinessDocument } from "./business.model";
 import { CartDocument } from "./cart.model";
+import { MenuDocument } from "./menu.model";
 
 export interface TransactionDocument extends mongoose.Document {
   createdBy?: UserDocument["_id"];
@@ -16,8 +17,11 @@ export interface TransactionDocument extends mongoose.Document {
   channel: string;
   status?: string;
   processor: string;
+  meta?: {
+    sourceMenu?: MenuDocument['_id']
+  }
   processorTransactionId?: string
-  processorData?: object
+  processorData?: any
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -79,6 +83,12 @@ const TransactionSchema = new mongoose.Schema(
         default: 'cashier'
     },
     processorData: {},
+    meta: {
+      sourceMenu: {
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Menu',
+      }
+    }
   },
   { timestamps: true }
 );

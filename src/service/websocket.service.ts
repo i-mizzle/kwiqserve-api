@@ -44,6 +44,48 @@ class WebSocketService {
             // Authenticate socket connection
             this.authenticateSocket(socket);
 
+            // Handle manual room join requests from client
+            socket.on('join_room', (data: any, callback?: Function) => {
+                log.debug(`Join room request from socket ${socket.id}:`, data);
+                
+                if (!socket.userId) {
+                    log.warn(`Socket ${socket.id} attempted to join room without authentication`);
+                    if (typeof callback === 'function') callback({ success: false, message: 'Not authenticated' });
+                    return;
+                }
+
+                // Extract businessId from data or use existing socket.businessId
+                let businessId = data?.businessId || socket.businessId;
+                
+                if (!businessId) {
+                    log.error(`Socket ${socket.id} join_room failed: no businessId provided and none in socket context`);
+                    if (typeof callback === 'function') callback({ success: false, message: 'businessId is required' });
+                    return;
+                }
+
+                const room = `business:${businessId}`;
+                socket.join(room);
+                socket.businessId = businessId;
+
+                // Send acknowledgment via callback if provided
+                if (typeof callback === 'function') {
+                    callback({ success: true, room, businessId, message: `Successfully joined room ${room}` });
+                }
+
+                // Also emit room_joined event for redundancy
+                socket.emit('room_joined', { room, businessId, message: 'Successfully joined business room' });
+                log.info(`Socket ${socket.id} manually joined room: ${room}`);
+            });
+
+            // Ping handler for testing connectivity
+            socket.on('ping', (data: any, callback?: Function) => {
+                if (typeof callback === 'function') {
+                    callback({ pong: true, timestamp: new Date().toISOString() });
+                }
+                socket.emit('pong', { timestamp: new Date().toISOString() });
+                log.debug(`Ping received from socket ${socket.id}`);
+            });
+
             socket.on('disconnect', () => {
                 log.info(`WebSocket client disconnected: ${socket.id}`);
             });
@@ -79,6 +121,9 @@ class WebSocketService {
         // Type assertion for JWT payload
         const payload = decoded as JWTPayload;
 
+        // Debug log JWT payload
+        log.debug(`Decoded JWT payload for socket ${socket.id}:`, payload);
+
         // Attach user info to socket
         socket.userId = payload._id;
         
@@ -93,7 +138,9 @@ class WebSocketService {
         // Join business-specific room if business context exists
         if (socket.businessId) {
             socket.join(`business:${socket.businessId}`);
-            log.info(`Socket ${socket.id} joined business room: ${socket.businessId}`);
+            log.info(`Socket ${socket.id} auto-joined business room: ${socket.businessId}`);
+        } else {
+            log.info(`Socket ${socket.id} authenticated but no business context - waiting for manual join_room event`);
         }
 
         log.info(`Socket ${socket.id} authenticated for user: ${socket.userId}`);

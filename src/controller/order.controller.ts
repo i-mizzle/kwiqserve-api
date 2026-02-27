@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import * as response from '../responses'
 import { get } from "lodash";
-import { getJsDate } from "../utils/utils";
+import { generateCode, getJsDate } from "../utils/utils";
 import { createOrder, deleteOrder, findAndUpdateOrder, findOrder, findOrders, orderItems, orderTotal } from "../service/order.service";
 import { findUser } from "../service/user.service";
 import { checkItemInventory, deductItemInventory, findAndUpdateVariant, findVariant } from "../service/item-variant.service";
@@ -14,13 +14,17 @@ import { createCustomer } from "../service/customer.service";
 import { findTable } from "../service/table.service";
 
 const parseOrderFilters = (query: any) => {
-    const { minDateCreated, maxDateCreated, alias, status, store, source, minTotal, maxTotal, paymentStatus } = query; 
+    const { minDateCreated, maxDateCreated, alias, status, store, source, table, minTotal, maxTotal, paymentStatus } = query; 
 
     const filters: any = {}; 
 
     if (source) {
         filters.source = source
     } 
+
+    if(table) {
+        filters.table = table
+    }
 
     if (paymentStatus) {
         filters.paymentStatus = paymentStatus;
@@ -112,10 +116,12 @@ export const createOrderHandler = async (req: Request, res: Response) => {
         const customer = await createCustomer({
             ...body.customer
         })
+        const orderRef = generateCode(12, true).toUpperCase()
         
         const order = await createOrder({
             ...body, 
             ...{
+                orderRef,
                 createdBy: userId || undefined, 
                 total: total.total, 
                 // vat: total.vat,\
@@ -494,7 +500,7 @@ export const deleteOrderHandler = async (req: Request, res: Response) => {
         }
 
         // check if order is not completed and not paid for
-        if(order.status !== 'COMPLETED' && order.paymentStatus === 'UNPAID'){
+        if(order.status !== 'completed' && order.paymentStatus === 'unpaid'){
             // if it is, loop through the items and add them back to the variant
             await Promise.all(order.items.map(async (item) =>{
                 const variant = await findVariant({_id: item.item})

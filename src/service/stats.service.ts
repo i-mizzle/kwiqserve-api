@@ -316,7 +316,7 @@ export const calculateMetrics = (orders: any[]) => {
     const { total, createdAt, status, paymentStatus, items } = order;
     const orderDate = new Date(createdAt);
 
-    if (paymentStatus === "PAID") {
+    if (paymentStatus === "paid") {
       // Daily
       if (isSameDay(orderDate, todayDate)) {
         todayOrdersCount++;
@@ -365,12 +365,12 @@ export const calculateMetrics = (orders: any[]) => {
       // }
     }
 
-    if (status === "CLOSED" && paymentStatus === "UNPAID") {
+    if ((status === "completed" || status === "cancelled" || status === "delivered") && paymentStatus === "unpaid") {
       closedUnpaidOrdersCount++;
       closedUnpaidOrdersValue += total;
     }
 
-    if (paymentStatus === "UNPAID") {
+    if (paymentStatus === "unpaid") {
       unpaidOrdersValue += total;
       unpaidOrdersCount++;
     }
@@ -523,7 +523,7 @@ export const calculateECommerceOrderMetrics = (orders: any[]) => {
     let processingTimeMinutes: number | null = null;
     if (order.statusHistory && order.statusHistory.length > 0) {
       const createdTime = new Date(order.createdAt).getTime();
-      const completedStatus = order.statusHistory.find((history: any) => history.status === 'COMPLETED');
+      const completedStatus = order.statusHistory.find((history: any) => history.status === 'completed');
       
       if (completedStatus && completedStatus.timeStamp) {
         const completedTime = new Date(completedStatus.timeStamp).getTime();

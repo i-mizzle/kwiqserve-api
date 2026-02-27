@@ -11,11 +11,17 @@ interface PaystackResponse {
     data: any
 }
 
-interface NewTransactionInput {
+export interface NewTransactionInput {
     email: string
+    firstName: string
+    lastName: string
+    phone: string
     amount: number
     reference: string
     callbackUrl: string
+    subAccount?: string
+    mainAccountFunds?: number
+    chargeBearer?: "subaccount" 
 }
 
 export const initiateTransaction = async (input: NewTransactionInput) => {
@@ -26,8 +32,12 @@ export const initiateTransaction = async (input: NewTransactionInput) => {
             amount: input.amount * 100,
             channels: ["card", "bank"],
             // channels: ["card", "bank", "apple_pay", "ussd", "qr", "bank_transfer"],
+            phone: input.phone || '',
             callback_url: input.callbackUrl,
             metadata: JSON.stringify({
+                first_name: input.firstName || '',
+                last_name: input.lastName || '',
+                customer_phone: input.phone,
                 scanServeRef: input.reference
             })
         }

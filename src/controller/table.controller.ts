@@ -5,6 +5,7 @@ import { getJsDate, slugify } from "../utils/utils";
 import { createAuditLog } from "../service/audit-log.service";
 import { createTable, findAndUpdateTable, findTable, findTables } from "../service/table.service";
 import { sendQrCodeJob } from "../queues/qrcode.queue";
+import { findOrders } from "../service/order.service";
 
 const parseTableFilters = (query: any) => {
     const { business, searchTerm, menu, minDateCreated, maxDateCreated } = query; 
@@ -77,6 +78,49 @@ export async function createTableHandler (req: Request, res: Response) {
     }
 }
 
+export async function createMultipleTablesHandler (req: Request, res: Response) {
+    try {
+        const userId = get(req, 'user._id')
+        const body = req.body
+
+        let tablesCreated: number = 0
+        for (let index = 0; index < body.quantity; index++) {  
+            const tableNumber: string = (index+1).toString().padStart(4, '0')
+            const tableData = {
+                name: body.name + ' ' + tableNumber,
+                code: `${body.code}-${tableNumber}`,
+                business: req.currentBusiness?._id,
+                description: body.description,
+                menu: body.menu,
+                deleted: false,
+                createdBy: userId
+            }      
+
+            const table = await createTable(tableData)
+            // const tableQRCode = 
+            await sendQrCodeJob({
+                tableId: table._id.toString(),
+                data: {
+                    tableUrl: `https://${req.businessSubdomain}.scanserve.cloud/tables/${table._id}`
+                }
+            })
+            // return res.send(post)
+            await createAuditLog({
+                actionType: 'create',
+                description: `created table ${body.name} as one of ${body.quantity} tables`,
+                actor: userId,
+                item: table._id,
+                requestPayload: body,
+                responseObject: table
+            })
+        }
+        return response.created(res, {message: `${tablesCreated} tables created successfully`})
+    } catch (error:any) {
+        return response.error(res, error)
+    }
+}
+
+
 export const getTablesHandler = async (req: Request, res: Response) => {
     try {
         const queryObject: any = req.query;
@@ -117,8 +161,50 @@ export async function getTableHandler (req: Request, res: Response) {
         const table = await findTable({ _id: tableId, deleted: false}, expand);
         if(!table) {
             return response.notFound(res, { message: `table was not found` })
-        } 
-        return response.ok(res, table)
+        }
+        
+        // Get today's date range
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        // Fetch all paid orders for this table
+        const allOrdersResult = await findOrders(
+            { table: tableId, paymentStatus: 'paid' },
+            0,
+            0,
+            ''
+        );
+
+        // Fetch today's paid orders for this table
+        const todayOrdersResult = await findOrders(
+            { table: tableId, paymentStatus: 'paid', createdAt: { $gte: today, $lt: tomorrow } },
+            0,
+            0,
+            ''
+        );
+
+        // Calculate stats
+        const allOrdersStats = {
+            count: allOrdersResult.orders.length,
+            total: allOrdersResult.orders.reduce((sum: number, order: any) => sum + (order.total || 0), 0)
+        };
+
+        const todayOrdersStats = {
+            count: todayOrdersResult.orders.length,
+            total: todayOrdersResult.orders.reduce((sum: number, order: any) => sum + (order.total || 0), 0)
+        };
+
+        const tableWithStats = {
+            ...table.toObject?.() || table,
+            orders: {
+                today: todayOrdersStats,
+                total: allOrdersStats
+            }
+        };
+
+        return response.ok(res, tableWithStats)
         
     } catch (error:any) {
         return response.error(res, error)

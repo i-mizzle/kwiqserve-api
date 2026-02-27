@@ -39,8 +39,8 @@ import {
     updateTaxSettingsHandler 
 } from './controller/business-setting.controller';
 import { findBusinessSetting } from './service/business-setting.service';
-import { createTableHandler, getTableHandler, getTablesHandler, updateTableHandler } from './controller/table.controller';
-import { getTableSchema } from './schema/table.schema';
+import { createMultipleTablesHandler, createTableHandler, getTableHandler, getTablesHandler, updateTableHandler } from './controller/table.controller';
+import { bulkCreateTableSchema, createTableSchema, getTableSchema } from './schema/table.schema';
 import { deductFromCartHandler, getCartsHandler, getClientCartHandler, sendToCartHandler } from './controller/cart.controller';
 import { checkoutCartSchema, deductFromCartSchema, sendToCartSchema } from './schema/cart.schema';
 import { checkoutHandler } from './controller/checkout.controller';
@@ -263,7 +263,7 @@ export default function(app: Express) {
 
     app.get('/dashboard/stats', 
         requiresUser,
-        requiresPermissions(['*', 'business.*', 'business.stats.read']),
+        requiresPermissions(['*', 'business.*', 'business.reports.*']),
         statsHandler
     )
 
@@ -352,8 +352,16 @@ export default function(app: Express) {
     app.post('/tables',
         requiresUser,
         requiresPermissions(['*', 'business.*', 'business.tables.*', 'business.tables.create']),
-        validateRequest(createMenuSchema),
+        validateRequest(createTableSchema),
         createTableHandler
+    )
+
+    // bulk create tables
+    app.post('/tables/bulk/create',
+        requiresUser,
+        requiresPermissions(['*', 'business.*', 'business.tables.*', 'business.tables.create']),
+        validateRequest(bulkCreateTableSchema),
+        createMultipleTablesHandler
     )
 
     // fetch menus

@@ -11,16 +11,16 @@ import puppeteer from "puppeteer";
 
 export const statsHandler = async (req: Request, res: Response) => {
     try {
-        const storeId = req.currentBusiness?._id
-        const orders = await findOrders({business: storeId}, 0, 0, 'items.parentItem')
-        const transactions = await findTransactions({business: storeId, order: { $exists: true }}, 0, 0, '')
-        const inventory = await findItems({business: storeId, deleted: false}, 0, 0, 'variants')
+        const businessId = req.currentBusiness?._id
+        const orders = await findOrders({business: businessId}, 0, 0, 'items.parentItem')
+        const transactions = await findTransactions({business: businessId, order: { $exists: true }}, 0, 0, '')
+        // const inventory = await findItems({business: storeId, deleted: false}, 0, 0, 'variants')
         const transactionsSummary = getTransactionSummary(transactions.data)
         const transactionsByChannel = getTransactionsByChannel(transactions.data)
         const metrics = calculateMetrics(orders.orders)
-        const lowStockVariants = listLowStockVariants(inventory.items)
+        // const lowStockVariants = listLowStockVariants(inventory.items)
 
-        return response.ok(res, {metrics: {...metrics, ...{lowStock: lowStockVariants}}, transactionsSummary, transactionsByChannel, }) 
+        return response.ok(res, {metrics: {...metrics}, transactionsSummary, transactionsByChannel, }) 
     } catch (error: any) {
         return response.error(res, error)
     }

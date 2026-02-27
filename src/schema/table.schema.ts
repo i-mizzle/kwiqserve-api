@@ -9,6 +9,18 @@ export const createTableSchema = object({
     })
 });
 
+
+export const bulkCreateTableSchema = object({
+    body: object({
+        quantity: number().required('quantity is required'),
+        name: string().required('name is required'),
+        code: string().required('code is required'),
+        description: string(),
+        menu: string().required('menu is required'),
+    })
+});
+
+
 // name: string;
 //     code: string;
 //     business: BusinessDocument["_id"]

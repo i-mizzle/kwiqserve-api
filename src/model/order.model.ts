@@ -32,7 +32,7 @@ export interface OrderDocument extends mongoose.Document {
     }[]
     processingTime?: number
     total: number;
-    vat: number;
+    vat?: number;
     sourceMenu: MenuDocument['_id']
     paymentStatus: string;
     customer?: CustomerDocument["_id"]
