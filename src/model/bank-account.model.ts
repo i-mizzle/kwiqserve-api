@@ -13,6 +13,7 @@ export interface BankAccountDocument extends mongoose.Document {
     paystackAccountId?: string    
     paystackRecipientCode?: string
     paystackIntegrationId?: string
+    paystackSubAccountCode?: string
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -55,6 +56,9 @@ const BankAccountSchema = new mongoose.Schema(
             type: String
         },
         paystackIntegrationId: {
+            type: String
+        },
+        paystackSubAccountCode: {
             type: String
         },
         deleted: {

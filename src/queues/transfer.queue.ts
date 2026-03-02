@@ -1,5 +1,6 @@
 import Bull from 'bull';
 import { FundsTransferInput } from '../service/integrations/paystack.service';
+import { PendingFeeDocument } from '../model/pending-fee.model';
 
 // Initialize the queue with Redis
 const transferQueue = new Bull('transferQueue', {
@@ -9,8 +10,12 @@ const transferQueue = new Bull('transferQueue', {
   },
 });
 
+export interface FundsTransferInterface extends FundsTransferInput {
+  pendingFeesApplied: PendingFeeDocument['_id']
+}
+
 // Function to add a slack message job to the queue
-export const sendTransferJob = (messageData: FundsTransferInput) => {
+export const sendTransferJob = (messageData: FundsTransferInterface) => {
     transferQueue.add(messageData, {
         attempts: 5, // retry 5 times if job fails
         backoff: 30000, // wait 30 seconds before retrying

@@ -4,6 +4,7 @@ import { OrderDocument } from "./order.model";
 import { BusinessDocument } from "./business.model";
 import { CartDocument } from "./cart.model";
 import { MenuDocument } from "./menu.model";
+import { PendingFeeDocument } from "./pending-fee.model";
 
 export interface TransactionDocument extends mongoose.Document {
   createdBy?: UserDocument["_id"];
@@ -14,6 +15,7 @@ export interface TransactionDocument extends mongoose.Document {
   receivingChannel?: any;
   amount: number;
   fees?: number;
+  pendingFeesSettled?: PendingFeeDocument['_id']
   channel: string;
   status?: string;
   processor: string;
@@ -65,6 +67,10 @@ const TransactionSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    pendingFeesSettled: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'PendingFee'
+    }],
     status: {
       type: String,
       enum: ['pending', 'successful', 'failed'],

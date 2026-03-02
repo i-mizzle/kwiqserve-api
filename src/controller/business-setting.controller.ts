@@ -5,7 +5,7 @@ import log from "../logger";
 import { createBusinessSetting, findAndUpdateBusinessSetting, findBusinessSetting } from "../service/business-setting.service";
 import { findBusiness } from "../service/business.service";
 import { createBankAccount } from "../service/bank-account.service";
-import { createTransferRecipient } from "../service/integrations/paystack.service";
+import { createSubAccount, createTransferRecipient } from "../service/integrations/paystack.service";
 
 /**
  * Add or update a receiving account for a business
@@ -29,7 +29,7 @@ export const addReceivingAccountHandler = async (req: Request, res: Response) =>
 
         // Create new bank account if not provided
         if (!bankAccountId) {
-            let paystackData = null;
+            let paystackData: any = null;
 
             // Only process on Paystack if this will be the preferred account
             if (accountData.preferredForRemittance === true) {
@@ -51,6 +51,20 @@ export const addReceivingAccountHandler = async (req: Request, res: Response) =>
                     paystackRecipientCode: paystackResponse.data.recipient_code,
                     paystackIntegrationId: paystackResponse.data.integration
                 };
+
+                const paystackSubAccount = await createSubAccount({
+                    businessName: req.currentBusiness.name,
+                    accountNumber: accountData.accountNumber,
+                    bankCode: accountData.bankCode
+                })
+
+                if (paystackSubAccount.error) {
+                    log.error('Paystack subaccount error:', paystackSubAccount.data);
+                    return response.badRequest(res, { 
+                        message: `Failed to create subaccount on Paystack: ${paystackSubAccount.data}` 
+                    });
+                }
+                paystackData.paystackSubAccountCode = paystackSubAccount.data.subaccount_code
             }
 
             // Create bank account in database

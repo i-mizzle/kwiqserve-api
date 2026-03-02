@@ -20,7 +20,7 @@ import { createCategoryHandler, deleteCategoryHandler, getCategoriesHandler } fr
 import { createMenuHandler, deleteMenuHandler, getMenuHandler, getMenusHandler, getPublicMenuHandler, updateMenuHandler } from './controller/menu.controller';
 import { createMenuSchema } from './schema/menu.schema';
 import { createOrderSchema } from './schema/order.schema';
-import { addToOrderHandler, createOrderHandler, deleteOrderHandler, getOrderHandler, getOrdersHandler, removeFromOrderHandler, updateOrderHandler } from './controller/order.controller';
+import { addToOrderHandler, createOrderHandler, deleteOrderHandler, getOrderHandler, getOrdersHandler, publicGetOrderHandler, removeFromOrderHandler, updateOrderHandler } from './controller/order.controller';
 import { exportTransactionsToCsvHandler, getAllTransactionsHandler } from './controller/transaction.controller';
 import { initializePaymentHandler, receivePaymentHandler, verifyTransactionHandler } from './controller/payments.controller';
 import { confirmationSchema, resendConfirmationSchema } from './schema/confirmation-code.schema';
@@ -499,6 +499,11 @@ export default function(app: Express) {
         requiresUser,
         requiresPermissions(['*', 'business.*', 'business.orders.*', 'business.orders.read']),
         getOrderHandler
+    )
+
+    // fetch public order details
+    app.get('/public/orders/details/:orderRef',
+        publicGetOrderHandler
     )
 
     // add to order

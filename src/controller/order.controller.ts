@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import * as response from '../responses'
 import { get } from "lodash";
+import { isValidObjectId } from "mongoose";
 import { generateCode, getJsDate } from "../utils/utils";
 import { createOrder, deleteOrder, findAndUpdateOrder, findOrder, findOrders, orderItems, orderTotal } from "../service/order.service";
 import { findUser } from "../service/user.service";
@@ -10,11 +11,12 @@ import { sendOrderStatusUpdateNotification } from "../service/mailer.service";
 import { findItem } from "../service/item.service";
 import { findBusinessSetting } from "../service/business-setting.service";
 import { websocketService } from "../service/websocket.service";
-import { createCustomer } from "../service/customer.service";
+import { createCustomer, findCustomer } from "../service/customer.service";
 import { findTable } from "../service/table.service";
+import { findBusiness } from "../service/business.service";
 
 const parseOrderFilters = (query: any) => {
-    const { minDateCreated, maxDateCreated, alias, status, store, source, table, minTotal, maxTotal, paymentStatus } = query; 
+    const { minDateCreated, maxDateCreated, alias, status, store, source, table, minTotal, maxTotal, paymentStatus, paymentMethod } = query; 
 
     const filters: any = {}; 
 
@@ -32,6 +34,19 @@ const parseOrderFilters = (query: any) => {
     
     if (status) {
         filters.status = status
+    }
+
+    if(paymentMethod) {
+        const paymentMethods = paymentMethod.split(',')
+        filters.paymentMethod = { $in: paymentMethods }
+    }
+
+    if(paymentStatus && paymentMethod) {
+        const paymentMethods = paymentMethod.split(',')
+        filters.$or = [
+            { paymentMethod: { $in: paymentMethods }},
+            { paymentStatus: paymentStatus }
+        ];
     }
 
     if (alias) {
@@ -113,9 +128,14 @@ export const createOrderHandler = async (req: Request, res: Response) => {
 
         const total = orderTotal(body.items, storeSettings)
 
-        const customer = await createCustomer({
-            ...body.customer
-        })
+        let customer = await findCustomer({email: body.customer.email})
+
+        if(!customer) {
+            customer = await createCustomer({
+                ...body.customer
+            })
+        }
+
         const orderRef = generateCode(12, true).toUpperCase()
         
         const order = await createOrder({
@@ -407,6 +427,10 @@ export const getOrderHandler = async (req: Request, res: Response) => {
         const orderId = get(req, 'params.orderId');
         const queryObject: any = req.query;
 
+        if (!isValidObjectId(orderId)) {
+            return response.badRequest(res, {message: 'invalid order ID'})
+        }
+
         const userId = get(req, 'user._id');
         const user = await findUser({_id: userId})
         if(!user) {
@@ -431,9 +455,49 @@ export const getOrderHandler = async (req: Request, res: Response) => {
     }
 }
 
+
+export const publicGetOrderHandler = async (req: Request, res: Response) => {
+    try {
+        const orderId = get(req, 'params.orderRef');
+        const queryObject: any = req.query;
+
+        if (!isValidObjectId(orderId)) {
+            return response.badRequest(res, {message: 'invalid order ID'})
+        }
+
+        let expand = queryObject.expand || null
+        if(expand && expand.includes(',')) {
+            expand = expand.split(',')
+        }
+
+        const currentBusiness = await findBusiness({subdomain: req.businessSubdomain})
+        if(!currentBusiness) {
+            return response.notFound(res, {message: 'business not found'})
+        }
+
+        const order = await findOrder({ orderRef: orderId, business: currentBusiness._id }, expand)
+
+        if(!order) {
+            return response.notFound(res, {message: 'order not found'})
+        }
+
+        return response.ok(res, order)
+        
+    } catch (error:any) {
+        console.log(error)
+        return response.error(res, error)
+    }
+}
+
+
 export const updateOrderHandler = async (req: Request, res: Response) => {
     try {
         const orderId = get(req, 'params.orderId');
+        
+        if (!isValidObjectId(orderId)) {
+            return response.badRequest(res, {message: 'invalid order ID'})
+        }
+
         const userId = get(req, 'user._id');
         const store = req.currentBusiness
         const user = await findUser({_id: userId})
@@ -493,6 +557,11 @@ export const updateOrderHandler = async (req: Request, res: Response) => {
 export const deleteOrderHandler = async (req: Request, res: Response) => {
     try {
         const orderId = get(req, 'params.orderId');
+        
+        if (!isValidObjectId(orderId)) {
+            return response.badRequest(res, {message: 'invalid order ID'})
+        }
+
         const userId = get(req, 'user._id')
         const order = await findOrder({_id: orderId})
         if(!order) {

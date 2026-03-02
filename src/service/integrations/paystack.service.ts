@@ -34,6 +34,9 @@ export const initiateTransaction = async (input: NewTransactionInput) => {
             // channels: ["card", "bank", "apple_pay", "ussd", "qr", "bank_transfer"],
             phone: input.phone || '',
             callback_url: input.callbackUrl,
+            subaccount: input.subAccount, 
+            transaction_charge: input.mainAccountFunds,
+            bearer: "subaccount",
             metadata: JSON.stringify({
                 first_name: input.firstName || '',
                 last_name: input.lastName || '',
@@ -110,6 +113,52 @@ export const createTransferRecipient = async (input: TransferRecipientInput): Pr
         console.log(input)
         const data = await axios.post(`${process.env.PAYSTACK_BASE_URL}/transferrecipient`, payload, { headers })
         console.log('paystack transfer recipient response: ', data.data)
+        const response = data.data as PaystackResponse
+        if(response.status === true) {
+            return {
+                error: false,
+                errorType: '',
+                data: response.data
+            }
+        } else {
+            return {
+                error: true,
+                errorType: 'error',
+                data: response.data
+            }
+        }
+    } catch (error: any) {
+        console.log(error.response)
+        return {
+            error: true,
+            errorType: 'error',
+            data: error.message || error
+        }
+    }
+} 
+
+interface SubAccountInput {
+    businessName: string
+    accountNumber: string
+    bankCode: string
+}
+
+export const createSubAccount = async (input: SubAccountInput): Promise<{
+    error: boolean,
+    errorType: string,
+    data: any
+}> => {
+    try {
+        const payload = {
+            business_name: input.businessName, 
+            bank_code: input.bankCode, 
+            account_number: input.accountNumber, 
+            percentage_charge: 0.1 
+        }
+
+        console.log('subaccount payload ---> ', payload)
+        const data = await axios.post(`${process.env.PAYSTACK_BASE_URL}/subaccount`, payload, { headers })
+        console.log('paystack subaccount response: ', data.data)
         const response = data.data as PaystackResponse
         if(response.status === true) {
             return {

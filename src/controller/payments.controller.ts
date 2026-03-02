@@ -16,6 +16,8 @@ import { sendTransferJob } from "../queues/transfer.queue";
 import moment from "moment";
 import { findAndUpdateCart, findCart } from "../service/cart.service";
 import { DocumentDefinition } from "mongoose";
+import { createPendingFee, findAndUpdatePendingFee } from "../service/pending-fee.service";
+import PendingFee from "../model/pending-fee.model";
 
 export const receivePaymentHandler = async (req: Request, res: Response) => {
     try {
@@ -36,24 +38,33 @@ export const receivePaymentHandler = async (req: Request, res: Response) => {
             return response.notFound(res, {message: 'order not found'})
         }
 
-        if(req.body.status === 'successful') {
-            await findAndUpdateOrder({_id: order._id}, {paymentStatus: 'paid', status: 'completed'}, {new:true})
-        }
-
         const transactionReference = generateCode(18, false)
-        // const transactionProcessor = req.body.paymentChannel === 'ONLINE' ? 'FLUTTERWAVE' : 'CASHIER'
+        const transactionFee = calculateFee(order.total)
 
-        // Create transacton first
+        // Create transaction 
         const newTransaction = await createTransaction({
             transactionReference,
             createdBy: userId,
             order: req.body.order,
             amount: req.body.amount || order.total, 
             processor: 'cashier',
+            fees: transactionFee,
             status: req.body.status,
             channel: req.body.channel,
             receivingChannel: req.body.receivingChannel,
             business: req.currentBusiness?._id
+        })
+
+        // update order status to paid
+        if(req.body.status === 'successful') {
+            await findAndUpdateOrder({_id: order._id}, {paymentStatus: 'paid', status: 'completed'}, {new:true})
+        }
+
+        // create a pending fee for this transaction as it was not charged via paystack
+        await createPendingFee({
+            business: req.currentBusiness._id,
+            amount: transactionFee,
+            transaction: newTransaction._id
         })
 
         return response.created(res, newTransaction)
@@ -145,9 +156,39 @@ export const initializePaymentHandler = async (req: Request, res: Response) => {
                 return
             }
 
-            input.subAccount = transferAccount.account.paystackRecipientCode
+            // Find all unsettled pending fees for the business
+            const unsettledPendingFees = await PendingFee.find({
+                business: currentStore._id,
+                deleted: false,
+                settled: false
+            }).lean()
+
+            // Calculate total of pending fees
+            const pendingFeesTotal = unsettledPendingFees.reduce((sum, fee) => sum + Number(fee.amount), 0)
+
+            input.subAccount = transferAccount.account.paystackSubAccountCode
             input.mainAccountFunds = fees
             input.chargeBearer = 'subaccount'
+
+            // If pending fees total is less than order total, add to mainAccountFunds and settle them
+            if (pendingFeesTotal < orderTotal) {
+                input.mainAccountFunds = fees + pendingFeesTotal
+                
+                const pendingFeeIds = unsettledPendingFees.map(fee => fee._id)
+                
+                // Update transaction with settled pending fees
+                await findAndUpdateTransaction(
+                    { _id: newTransaction._id },
+                    { pendingFeesSettled: pendingFeeIds },
+                    { new: true }
+                )
+
+                // Mark all pending fees as settled
+                await PendingFee.updateMany(
+                    { _id: { $in: pendingFeeIds } },
+                    { settled: true }
+                )
+            }
         }
 
 
@@ -227,10 +268,10 @@ export const verifyTransactionHandler = async (req: Request, res: Response) => {
                 const orderRef = generateCode(12, true).toUpperCase()
                 // create order pulling cart items and total price and set payment status to pending
                 const orderPayload: any = {
-                    alias: `web-order-${transaction.cart._id}`,
+                    alias: `table-order-${transaction.cart._id}`,
                     source: 'online',
                     items: transaction.cart.items,
-                    total: transaction.amount,
+                    total: transaction.amount - (transaction.fees || 0), // subtract fees so that the order total has the real amount value
                     status: 'pending',
                     paymentStatus: 'paid',
                     orderRef,
@@ -238,12 +279,9 @@ export const verifyTransactionHandler = async (req: Request, res: Response) => {
                     business: transaction.business,
                     cart: transaction.cart._id,
                     table: transaction.cart.table,
-                    // orderBy: body.orderBy,
-                    // deliveryType: body.deliveryType,
-                    // deliveryAddress: body.deliveryAddress,
                     paymentMethod: 'online',
-                    customer: customer._id
-                    // vat: orderTotal(cart.items, storeSettings).vat
+                    customer: customer._id,
+                    transaction: transaction._id
                 }
 
                 newOrder = await createOrder(orderPayload)
@@ -251,6 +289,7 @@ export const verifyTransactionHandler = async (req: Request, res: Response) => {
                 if(newOrder) {
                     updateObject.order = newOrder._id
                 }
+
             }
 
             await findAndUpdateTransaction({ _id: transaction._id }, updateObject, { new: true })
@@ -290,13 +329,41 @@ export const verifyTransactionHandler = async (req: Request, res: Response) => {
                     const trfRef = generateCode(18,true).toUpperCase()
                    
                     const transferFee = calculateTransferFee(transaction.amount)
+                    let transferAmount = transaction.amount - transferFee
+                    let pendingFeesApplied: any[] = []
+
+                    // Find all unsettled pending fees for the business
+                    const unsettledPendingFees = await PendingFee.find({
+                        business: currentStore._id,
+                        deleted: false,
+                        settled: false
+                    }).lean()
+
+                    // Calculate total of pending fees
+                    const pendingFeesTotal = unsettledPendingFees.reduce((sum, fee) => sum + Number(fee.amount), 0)
+
+                    // If pending fees total is less than transfer amount, subtract from amount
+                    if (pendingFeesTotal < transferAmount) {
+                        transferAmount = transferAmount - pendingFeesTotal
+                        pendingFeesApplied = unsettledPendingFees.map(fee => fee._id)
+                    }
+
                     sendTransferJob({
-                        amount: transaction.amount - transferFee,
+                        amount: transferAmount,
+                        pendingFeesApplied,
                         recipient:  transferAccount.account.paystackRecipientCode,
                         reference: trfRef,
                         reason:`settlement from order: ${transaction.order.orderRef} ${moment(transaction.order.createdAt).format('DD-MM-YYYY')}`
                     })
                 }
+            }
+
+            // If transaction has pending fees settled, mark them all as settled
+            if (transaction.pendingFeesSettled && transaction.pendingFeesSettled.length > 0) {
+                await PendingFee.updateMany(
+                    { _id: { $in: transaction.pendingFeesSettled } },
+                    { settled: true }
+                )
             }
 
             return response.ok(res, {
