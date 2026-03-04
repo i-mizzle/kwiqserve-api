@@ -14,7 +14,6 @@ export const checkoutHandler = async (req: Request, res: Response) => {
     try {
         // const userId = get(req, 'user._id');
         const cartId = get(req, 'params.cartId');
-        const tableId = get(req, 'params.tableId');
         const body = req.body;
 
         const currentBusiness = await findBusiness({subdomain: req.businessSubdomain})
@@ -22,7 +21,7 @@ export const checkoutHandler = async (req: Request, res: Response) => {
             return response.notFound(res, {message: `business not found`})
         }
 
-        const table = await findTable({_id: tableId})
+        const table = await findTable({_id: body.table})
         if(!table) {
             return response.notFound(res, {message: 'table not found'})
         }
@@ -40,13 +39,7 @@ export const checkoutHandler = async (req: Request, res: Response) => {
         if(!cart) {
             return response.notFound(res, {message: `cart not found`})
         }
-        const cartUpdate = {
-            checkoutStatus: 'checked_out'
-        }
-
-        // update cart checkout status
-        await findAndUpdateCart({_id: cartId}, cartUpdate, {new: true})
-
+       
         const orderAmounts = orderTotal(cart.items, storeSettings)
 
         // create order pulling cart items and total price and set payment status to pending
@@ -58,24 +51,32 @@ export const checkoutHandler = async (req: Request, res: Response) => {
             status: 'pending',
             paymentStatus: 'unpaid',
             sourceMenu: body.sourceMenu,
-            business: body.store,
+            business: body.business,
             cart: cart._id,
             table: table._id,
             paymentMethod: body.paymentMethod,
             vat: orderAmounts.vat
         }
 
-        let customer = await findCustomer({email: body.customer.email})
+        let customer = await findCustomer({email: body.orderBy.email})
 
         if(!customer) {
             customer = await createCustomer({
-                ...body.customer
+                ...body.orderBy,
+                business: currentBusiness._id
             })
         }
 
         const orderRef = generateCode(12, true).toUpperCase()
         
         const order = await createOrder({...orderPayload, orderRef: orderRef, customer: customer._id})
+
+        const cartUpdate = {
+            checkoutStatus: 'checked_out'
+        }
+
+        // update cart checkout status
+        await findAndUpdateCart({_id: cartId}, cartUpdate, {new: true})
 
         if (order.paymentMethod === 'cash_on_delivery' || order.paymentMethod === 'pos_on_delivery') {
             websocketService.sendToBusiness(

@@ -28,25 +28,27 @@ const parseOrderFilters = (query: any) => {
         filters.table = table
     }
 
-    if (paymentStatus) {
-        filters.paymentStatus = paymentStatus;
-    } 
-    
     if (status) {
         filters.status = status
     }
 
-    if(paymentMethod) {
-        const paymentMethods = paymentMethod.split(',')
-        filters.paymentMethod = { $in: paymentMethods }
-    }
-
+    // Handle payment filters with OR logic when both are present
     if(paymentStatus && paymentMethod) {
         const paymentMethods = paymentMethod.split(',')
         filters.$or = [
             { paymentMethod: { $in: paymentMethods }},
             { paymentStatus: paymentStatus }
         ];
+    } else {
+        // Only set individual filters if both aren't present
+        if (paymentStatus) {
+            filters.paymentStatus = paymentStatus;
+        }
+        
+        if(paymentMethod) {
+            const paymentMethods = paymentMethod.split(',')
+            filters.paymentMethod = { $in: paymentMethods }
+        }
     }
 
     if (alias) {
