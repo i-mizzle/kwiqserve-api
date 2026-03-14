@@ -18,7 +18,7 @@ export const connectToDatabase = async () => {
             return;
         }
 
-        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/scanserve', {
+        await mongoose.connect(process.env.DB_URI as string, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });

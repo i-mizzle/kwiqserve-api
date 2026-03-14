@@ -16,7 +16,7 @@ qrCodeQueue.process(async (job: any) => {
 
     log.info(`qr-code created for ${job.data.tableId}: ${qrCodeUrl}`);
   } catch (error) {
-    log.error(`qr-code creation failed to send to ${job.data.storeFrontUrl}: `, error);
+    log.error(`qr-code creation failed to send to ${job.data.tableUrl}: `, error);
     throw error; // Allows Bull to handle retries and logging
   }
 });

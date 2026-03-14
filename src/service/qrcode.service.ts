@@ -31,7 +31,7 @@ export const generateAndUploadQRCode = async (tableId: string, data: {tableUrl: 
 
     // upload to Cloudinary
     const uploadResponse = await cloudinary.v2.uploader.upload(`data:image/png;base64,${base64Data}`, {
-      folder: 'scanserve-assets/qr-codes',
+      folder: 'kwiqserve-assets/qr-codes',
       public_id: `qr-${Date.now()}-${tableId}`,
       overwrite: true,
       resource_type: 'image'
