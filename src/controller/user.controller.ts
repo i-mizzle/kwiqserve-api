@@ -119,7 +119,7 @@ export async function signupHandler(req: Request, res: Response) {
                     mailTo: user.email,
                     firstName: user.name.split(' ')[0],
                     activationCode: code,
-                    subdomain: input.subdomain   
+                    subdomain: input.business.subdomain   
                 }
             })
         }
