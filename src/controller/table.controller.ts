@@ -57,10 +57,10 @@ export async function createTableHandler (req: Request, res: Response) {
     
         const table = await createTable({ ...body, ...{createdBy: userId, slug: slugify(body.name), business: req.currentBusiness?._id} })
         // const tableQRCode = 
-        await sendQrCodeJob({
+        sendQrCodeJob({
             tableId: table._id.toString(),
             data: {
-                tableUrl: `https://${req.businessSubdomain}.scanserve.cloud/tables/${table._id}`
+                tableUrl: `https://${req.businessSubdomain}.${process.env.FRONTEND_URL}/tables/${table._id}`
             }
         })
         // return res.send(post)
