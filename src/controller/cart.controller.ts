@@ -91,11 +91,11 @@ export const sendToCartHandler = async (req: Request, res: Response) => {
 
 export const deductFromCartHandler = async (req: Request, res: Response) => {
     try {
-        const storeId = get(req, 'params.storeId');
+        const storeId = get(req, 'params.businessId');
         const body = req.body
         const cart = await findCart({
             clientId: body.clientId, 
-            store: storeId, 
+            business: storeId, 
             deleted: false
         })
 

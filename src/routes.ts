@@ -408,7 +408,7 @@ export default function(app: Express) {
     )
     
     // send item to shopping cart
-    app.post('/shopping-carts/deduct/:storeId',
+    app.post('/shopping-carts/deduct/:businessId',
         validateRequest(deductFromCartSchema),
         deductFromCartHandler
     )

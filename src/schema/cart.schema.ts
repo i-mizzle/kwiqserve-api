@@ -25,7 +25,7 @@ export const deductFromCartSchema = object({
         quantity: number().required('item.quantity is required')
     }),
     params: object({
-        storeId: string().required('business id is required as a path param')
+        businessId: string().required('business id is required as a path param')
     })
 });
 
