@@ -101,7 +101,7 @@ emailTemplate += `
                                 <p>Your email has been successfully confirmed ✅ and your Scanserve workspace is live!</p>
 
                                 <p>You can now log in anytime at:<br />
-                                👉 ${input.subdomain}.scanserve.cloud</p>
+                                👉 <strong>https://${input.subdomain}.${process.env.FRONTEND_URL}</strong></p>
 
                                 <p>Here's what you can do right away:</p>
 

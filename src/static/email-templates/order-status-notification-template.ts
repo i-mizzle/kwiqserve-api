@@ -89,7 +89,7 @@ emailTemplate += `
                     emailTemplate += `
                     <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
                         <td class="content-block" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px;" valign="top">
-                            Hello ${input.orderBy.name}, The status of your order on ${input.storeName} via <a href="https://scanserve.cloud">scanserve</a> has been updated. <br />
+                            Hello ${input.orderBy.name}, The status of your order on ${input.storeName} via <a href="https://kwiqserve.com">Kwiqserve</a> has been updated. <br />
                             Your new order status is <strong>${unSlugify(input.newStatus)}</strong>
                         </td>
                     </tr>

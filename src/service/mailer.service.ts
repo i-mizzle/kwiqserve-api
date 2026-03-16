@@ -77,11 +77,11 @@ export async function sendConfirmationNotification (mailParams: ConfirmationMail
         const template = UserEmailConfirmationTemplate(mailParams);
         const html = await inlineCSS(template, { url: 'fake' });
         const data = {
-            from: 'Scanserve <no-reply@scanserve.cloud>',
+            from: 'Kwiqserve <no-reply@kwiqserve.com>',
             to: mailParams.mailTo,
             subject: 'Confirm your Email',
             // template: 'email_confirmation',
-            text: `Confirm your email on Scanserve`,
+            text: `Confirm your email on Kwiqserve`,
             html: html,
             // "",
             // "h:X-Mailgun-Variables": JSON.stringify({
@@ -117,9 +117,9 @@ export async function sendWelcomeEmail (mailParams: WelcomeMailParams) {
         const template = WelcomeTemplate(mailParams);
         const html = await inlineCSS(template, { url: 'fake' });
         const data = {
-            from: 'Scanserve <no-reply@scanserve.cloud>',
+            from: 'Kwiqserve <no-reply@kwiqserve.com>',
             to: mailParams.mailTo,
-            subject: 'Welcome to Scanserve',
+            subject: 'Welcome to Kwiqserve',
             // template: 'email_confirmation',
             text: `Glad to have you onboard`,
             html: html,
@@ -152,11 +152,11 @@ export async function sendOrderNotification (mailParams: OrderNotificationMailPa
         const template = OrderNotificationTemplate(mailParams);
         const html = await inlineCSS(template, { url: 'fake' });
         const data = {
-            from: 'Scanserve <no-reply@scanserve.cloud>',
+            from: 'Kwiqserve <no-reply@kwiqserve.com>',
             to: mailParams.mailTo,
-            subject: 'New Order on Scanserve',
+            subject: 'New Order on Kwiqserve',
             // template: 'email_confirmation',
-            text: `There's a new order on scanserve`,
+            text: `There's a new order on kwiqserve`,
             html: html,
             // "",
             // "h:X-Mailgun-Variables": JSON.stringify({
@@ -187,11 +187,11 @@ export async function sendOrderNotificationToUser (mailParams: OrderNotification
         const template = UserOrderNotificationTemplate(mailParams);
         const html = await inlineCSS(template, { url: 'fake' });
         const data = {
-            from: 'Scanserve <no-reply@scanserve.cloud>',
+            from: 'Kwiqserve <no-reply@kwiqserve.com>',
             to: mailParams.mailTo,
-            subject: 'Your new Order on Scanserve ecommerce',
+            subject: 'Your new Order on Kwiqserve ecommerce',
             // template: 'email_confirmation',
-            text: `There's a new order on scanserve`,
+            text: `There's a new order on kwiqserve`,
             html: html,
             // "",
             // "h:X-Mailgun-Variables": JSON.stringify({
@@ -222,11 +222,11 @@ export async function sendOrderStatusUpdateNotification (mailParams: OrderStatus
         const template = OrderStatusNotificationTemplate(mailParams);
         const html = await inlineCSS(template, { url: 'fake' });
         const data = {
-            from: 'Scanserve <no-reply@scanserve.cloud>',
+            from: 'Kwiqserve <no-reply@kwiqserve.com>',
             to: mailParams.mailTo,
             subject: 'Your order has been updated',
             // template: 'email_confirmation',
-            text: `There's a new order on scanserve`,
+            text: `There's a new order on kwiqserve`,
             html: html,
             // "",
             // "h:X-Mailgun-Variables": JSON.stringify({
@@ -257,11 +257,11 @@ export async function sendEnquiryNotification (mailParams: EnquiryEmailParams) {
         const template = NewEnquiryNotificationTemplate(mailParams);
         const html = await inlineCSS(template, { url: 'fake' });
         const data = {
-            from: 'Scanserve <no-reply@scanserve.cloud>',
+            from: 'Kwiqserve <no-reply@kwiqserve.com>',
             to: mailParams.mailTo,
-            subject: 'New Enquiry from Scanserve Website',
+            subject: 'New Enquiry from Kwiqserve Website',
             // template: 'email_confirmation',
-            text: `There's a new enquiry on scanserve website`,
+            text: `There's a new enquiry on kwiqserve website`,
             html: html,
             // "",
             // "h:X-Mailgun-Variables": JSON.stringify({
@@ -300,7 +300,7 @@ export async function sendNoPublicMenuEmail (mailParams: NoPublicMenuMailParams)
         const template = NoPublicMenuNotificationTemplate(mailParams);
         const html = await inlineCSS(template, { url: 'fake' });
         const data = {
-            from: 'Scanserve <no-reply@scanserve.cloud>',
+            from: 'Kwiqserve <no-reply@kwiqserve.com>',
             to: mailParams.mailTo,
             subject: `${mailParams.storeName} needs a public price card, ${mailParams.firstName}`,
             // template: 'email_confirmation',
@@ -343,9 +343,9 @@ export const sendBackupsEmail = async (mailParams: BackupMailParams) => {
     const date = new Date().toISOString().slice(0, 10);
 
     const data = {
-        from: 'Scanserve <no-reply@excellers.cloud.ng>',
+        from: 'Kwiqserve <no-reply@excellers.cloud.ng>',
         to: mailParams.mailTo,
-        subject: `Scanserve database dumps for ${config.get('environment')} - ${date}`,
+        subject: `Kwiqserve database dumps for ${config.get('environment')} - ${date}`,
         text: `Please find the exported MongoDB collections attached for ${config.get('environment')} environment.`,
         attachment: files.map(file => fs.createReadStream(file.path))  // Attach file streams
     };
@@ -370,9 +370,9 @@ export async function sendPasswordResetEmail (mailParams: PasswordResetMailParam
         const template = PasswordResetEmailTemplate(mailParams);
         const html = await inlineCSS(template, { url: 'fake' });
         const data = {
-            from: 'Scanserve <no-reply@scanserve.cloud>',
+            from: 'Kwiqserve <no-reply@kwiqserve.com>',
             to: mailParams.mailTo,
-            subject: `Reset your Scanserve password`,
+            subject: `Reset your Kwiqserve password`,
             text: `Follow this link to reset your password`,
             html: html,
         };

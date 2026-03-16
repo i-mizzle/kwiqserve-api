@@ -98,7 +98,7 @@ emailTemplate += `
 
                                 <p>Hi ${input.firstName},</p>
 
-                                <p>We have received a request to reset your password on scanserve. Please click the link below to create a new password if you initiated this request</p>
+                                <p>We have received a request to reset your password on Kwiqserve. Please click the link below to create a new password if you initiated this request</p>
 
                                 <a href="${input.subdomain}.${frontendUrl}/confirm-email/${input?.resetCode}" style="padding: 15px; border-radius: 8px; background-color: #2F2F31; color: #f6f6f6; font-size: 14px; font-weight: 500; margin-bottom: 20px; display: inline-block; margin-top: 10px; text-decoration: none;">Create a new password</a><br/>
 

@@ -19,7 +19,7 @@ export const subdomainParser = (req: Request, res: Response, next: NextFunction)
   const parts = hostHeader!.split('.');
   const subdomain = parts.length > 2 ? parts[0] : null;
 
-  if (subdomain && subdomain !== 'www' && subdomain !== 'scanserve') {
+  if (subdomain && subdomain !== 'www' && subdomain !== 'kwiqserve') {
     req.businessSubdomain = subdomain;
   }
 

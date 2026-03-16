@@ -28,7 +28,7 @@ export default {
         API_KEY: process.env.CLOUDINARY_API_KEY,
         API_SECRET: process.env.CLOUDINARY_API_SECRET 
     },
-    scanserveSettings: {
+    kwiqserveSettings: {
         forbiddenUserFields: ['emailConfirmed', 'userType', 'email', 'username', 'confirmationCode'],
         postReadRate: 255
     }

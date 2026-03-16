@@ -4,7 +4,7 @@ const mailerSend = new MailerSend({
     apiKey: process.env.MAILERSEND_API_KEY as string,
 });
 
-const sentFrom = new Sender("no-reply@scanserve.cloud", "");
+const sentFrom = new Sender("no-reply@kwiqserve.com", "");
 
 interface EmailInput {
     mailTo: string

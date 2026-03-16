@@ -4,7 +4,7 @@
 
 This is a **multi-tenant Express/TypeScript API** for restaurant/retail management (Scanserve). Core patterns:
 
-- **Multi-tenancy via Subdomain**: Businesses identified by subdomain (`pizza-shop.scanserve.clopud`). The `subdomainParser` middleware extracts `req.businessSubdomain` from host header, excluding 'www' and 'scanserve' subdomains. User type = 'user' requires subdomain context; admins bypass this.
+- **Multi-tenancy via Subdomain**: Businesses identified by subdomain (`pizza-shop.kwiqserve.clopud`). The `subdomainParser` middleware extracts `req.businessSubdomain` from host header, excluding 'www' and 'kwiqserve' subdomains. User type = 'user' requires subdomain context; admins bypass this.
 - **Service Layer Pattern**: All database operations through service functions (`createUser`, `findUser`, `findAndUpdateUser` in [src/service/user.service.ts](src/service/user.service.ts)). Never call Mongoose models directly from controllers.
 - **Controller-Service-Model**: Controllers handle HTTP, services contain business logic, models define Mongoose schemas.
 - **Response Standardization**: **ALWAYS** use [src/responses/](src/responses/) functions: `response.ok()`, `response.created()`, `response.notFound()`, `response.forbidden()`, etc. **NEVER** use `res.json()` or `res.status()` directly.
@@ -19,7 +19,7 @@ This is a **multi-tenant Express/TypeScript API** for restaurant/retail manageme
   - `requiresAdministrator` - checks `userType === 'admin'`
   - `requiresPermissions(['permission.name'])` - checks against `req.permissions` (supports wildcards: `'*'`, `'business.*'`, `'business.users.read'`)
 - **Permission Storage**: Users have `businesses[]` array with `business`, `roles[]` (refs to Role documents with `permissions[]`). Admins have top-level `adminRoles[]`.
-- **Forbidden Fields**: `rejectForbiddenUserFields` middleware blocks updates to fields in `config.scanserveSettings.forbiddenUserFields` (e.g., `emailConfirmed`, `userType`, `email`, `username`, `confirmationCode`).
+- **Forbidden Fields**: `rejectForbiddenUserFields` middleware blocks updates to fields in `config.kwiqserveSettings.forbiddenUserFields` (e.g., `emailConfirmed`, `userType`, `email`, `username`, `confirmationCode`).
 
 ## Middleware Chain Architecture
 
@@ -102,7 +102,7 @@ npm run workers   # Start Bull queue workers
 
 - **config Package**: [config/default.ts](config/default.ts) exports object with environment variables. Access: `const config = require('config'); const port = config.get('port')`.
 - **Custom Config Path**: `process.env.NODE_CONFIG_DIR` set in [src/app.ts](src/app.ts) to `../config`.
-- **Settings**: `config.scanserveSettings` contains app-specific settings like `forbiddenUserFields` (array of protected fields), `postReadRate` (255).
+- **Settings**: `config.kwiqserveSettings` contains app-specific settings like `forbiddenUserFields` (array of protected fields), `postReadRate` (255).
 
 ## File Uploads
 

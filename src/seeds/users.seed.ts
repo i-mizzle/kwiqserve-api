@@ -16,7 +16,7 @@ export const seedUsers = async () => {
         const superAdmin = {
             emailConfirmed: true,
             userType: "super-administrator",
-            email: "super-admin@scanserve.cloud",
+            email: "super-admin@kwiqserve.com",
             username: "sys-admin",
             name: "Super Administrator",
             passwordChanged: true,

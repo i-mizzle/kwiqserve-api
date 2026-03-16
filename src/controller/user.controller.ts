@@ -260,7 +260,7 @@ export async function confirmEmailHandler (req: Request, res: Response) {
             data: {
                 mailTo: user.email,
                 firstName: user.name.split(' ')[0],
-                subdomain: req.businessSubdomain   
+                subdomain: req?.businessSubdomain   
             }
         })
         

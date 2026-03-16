@@ -395,7 +395,7 @@ Add to your `.env` file:
 ```bash
 REACT_APP_API_URL=http://localhost:3000
 # or for production
-REACT_APP_API_URL=https://api.scanserve.cloud
+REACT_APP_API_URL=https://api.kwiqserve.com
 ```
 
 ## Troubleshooting

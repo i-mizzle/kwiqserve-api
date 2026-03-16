@@ -98,7 +98,7 @@ emailTemplate += `
 
                                 <p>Hi ${input.firstName},</p>
 
-                                <p>Welcome to Scanserve! 🎉 We're excited to help you manage your business smarter and faster.</p>
+                                <p>Welcome to Kwiqservecanserve! 🎉 We're excited to help you manage your business smarter and faster.</p>
 
                                 <p>Before you can start exploring your dashboard, we need to confirm your email address. This helps us keep your account secure and ensure you never miss an important update.</p>
 
@@ -109,16 +109,16 @@ emailTemplate += `
                                 
                                 <p>Once confirmed, you'll get access to:</p>
 
-                                <li>A dedicated business dashboard at <strong>${input.subdomain}.scanserve.cloud</strong></li>
+                                <li>A dedicated business dashboard at <strong>${input.subdomain}.${process.env.FRONTEND_URL}</strong></li>
 
                                 <li>Real-time sales tracking and inventory management</li>
 
                                 <li>Automated reporting and insights to help you grow</li>
 
-                                <p>Thanks for joining Scanserve — your smarter way to manage and scale your business.</p>
+                                <p>Thanks for joining Kwiqservecanserve — your smarter way to manage and scale your business.</p>
 
                                 <p>Cheers,<br/>
-                                The Scanserve Team</p>
+                                The Kwiqservecanserve Team</p>
 
                             </td>
                         </tr>
@@ -128,7 +128,7 @@ emailTemplate += `
 
 
             emailTemplate += `</table><div class="footer" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; width: 100%; clear: both; color: #999; margin: 0; padding: 20px;">`
-            // if(settings.socialMedia.showSocialLinks === true){
+            // if(settings.socialMedia.showKwiqserveocialLinks === true){
             //   emailTemplate += `<table width="100%" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;"><tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
             //       <td class="aligncenter content-block" style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 12px; vertical-align: top; color: #999; text-align: center; margin: 0; padding: 0 0 20px;" align="center" valign="top">`
             //       if(settings.socialMedia.links.filter((link)=>{return link.title === 'twitter'}).length > 0){
