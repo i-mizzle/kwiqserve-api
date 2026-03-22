@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { UserDocument } from './user.model';
+import { BusinessDocument } from './business.model';
 
 export interface AuditLogDocument extends mongoose.Document {
     actionType: string;
@@ -8,6 +9,7 @@ export interface AuditLogDocument extends mongoose.Document {
     item?: any    
     requestPayload?: object
     responseObject?: object
+    business?: BusinessDocument['_id']
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -32,6 +34,10 @@ const AuditLogSchema = new mongoose.Schema(
         item: {
             type:  mongoose.Schema.Types.ObjectId, 
         },
+        business: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Business'
+        }
     },
     { timestamps: true }
 );

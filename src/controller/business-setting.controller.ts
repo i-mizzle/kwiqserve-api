@@ -4,8 +4,9 @@ import * as response from "../responses/index";
 import log from "../logger";
 import { createBusinessSetting, findAndUpdateBusinessSetting, findBusinessSetting } from "../service/business-setting.service";
 import { findBusiness } from "../service/business.service";
-import { createBankAccount } from "../service/bank-account.service";
+import { createBankAccount, deleteBankAccount } from "../service/bank-account.service";
 import { createSubAccount, createTransferRecipient } from "../service/integrations/paystack.service";
+import { sendAuditLogJob } from "../queues/audit-log.queue";
 
 /**
  * Add or update a receiving account for a business
@@ -112,6 +113,75 @@ export const addReceivingAccountHandler = async (req: Request, res: Response) =>
 };
 
 /**
+ * Remove a receiving account from a business
+ */
+export const removeReceivingAccountHandler = async (req: Request, res: Response) => {
+    try {
+        const userId = get(req, 'user._id');
+        const businessId = req.currentBusiness?._id;
+        const settingsAccountId = req.params.settingsAccountId;
+
+        // Fetch business settings with populated account references
+        const businessSetting = await findBusinessSetting({ business: businessId }, 'receivingAccounts.account');
+        if (!businessSetting) {
+            return response.notFound(res, { message: 'business settings not found' });
+        }
+
+        // Find the targeted account
+        const targetedAccount = businessSetting.receivingAccounts?.find((acct: any) => acct._id.toString() === settingsAccountId);
+        if (!targetedAccount) {
+            return response.notFound(res, { message: 'account in business settings not found' });
+        }
+
+        // Verify account object is populated
+        if (!targetedAccount.account || !targetedAccount.account._id) {
+            log.error('Account reference not properly populated for targetedAccount:', targetedAccount);
+            return response.error(res, { message: 'account reference is corrupted' });
+        }
+
+        // Check if account is set as preferred for remittance
+        if (targetedAccount.preferredForRemittance) {
+            return response.badRequest(res, { 
+                message: 'the account is set as preferred for remittance. please set a new remittance account before you can delete it' 
+            });
+        }
+
+        // Delete bank account from database
+        const deleted = await deleteBankAccount({ _id: targetedAccount.account._id });
+        if (!deleted) {
+            return response.error(res, { message: 'error occurred deleting account' });
+        }
+
+        // Remove account from receivingAccounts array after successful deletion
+        const newAccounts = businessSetting.receivingAccounts?.filter((acct: any) => acct._id.toString() !== settingsAccountId);
+        const updateResult = await findAndUpdateBusinessSetting(
+            { _id: businessSetting._id },
+            { receivingAccounts: newAccounts },
+            { new: true }
+        );
+
+        if (!updateResult) {
+            log.error('Failed to update business settings after deleting bank account');
+            return response.error(res, { message: 'failed to update business settings' });
+        }
+
+        // Send audit log only after successful deletion and update
+        sendAuditLogJob({
+            actionType: 'delete',
+            actor: userId,
+            business: businessId,
+            description: `deleted business account ${targetedAccount.account._id}`,
+            requestPayload: req.body,
+        });
+
+        return response.ok(res, { message: 'receiving account deleted successfully' });
+    } catch (error: any) {
+        log.error(error);
+        return response.error(res, { message: error.message });
+    }
+}
+
+/**
  * Add a POS device to business settings
  */
 export const addPosDeviceHandler = async (req: Request, res: Response) => {
@@ -162,6 +232,57 @@ export const addPosDeviceHandler = async (req: Request, res: Response) => {
         return response.error(res, { message: error.message });
     }
 };
+
+
+/**
+ * Remove a POS Device from a business
+ */
+export const removePosDeviceHandler = async (req: Request, res: Response) => {
+    try {
+        const userId = get(req, 'user._id');
+        const businessId = req.currentBusiness?._id;
+        const deviceId = req.params.deviceId;
+
+        // Fetch business settings with populated account references
+        const businessSetting = await findBusinessSetting({ business: businessId });
+        if (!businessSetting) {
+            return response.notFound(res, { message: 'business settings not found' });
+        }
+
+        // Find the targeted device
+        const targetedAccount = businessSetting.posDevices?.find((acct: any) => acct._id.toString() === deviceId);
+        if (!targetedAccount) {
+            return response.notFound(res, { message: 'device in business settings not found' });
+        }
+
+        // Remove account from receivingAccounts array after successful deletion
+        const newDevices = businessSetting.posDevices?.filter((device: any) => device._id.toString() !== deviceId);
+        const updateResult = await findAndUpdateBusinessSetting(
+            { _id: businessSetting._id },
+            { posDevices: newDevices },
+            { new: true }
+        );
+
+        if (!updateResult) {
+            log.error('Failed to update business settings');
+            return response.error(res, { message: 'failed to update business settings' });
+        }
+
+        // Send audit log only after successful deletion and update
+        sendAuditLogJob({
+            actionType: 'delete',
+            actor: userId,
+            business: businessId,
+            description: `deleted pos device ${deviceId}`,
+            requestPayload: req.body,
+        });
+
+        return response.ok(res, { message: 'POS device deleted successfully' });
+    } catch (error: any) {
+        log.error(error);
+        return response.error(res, { message: error.message });
+    }
+}
 
 /**
  * Update tax settings for a business

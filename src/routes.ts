@@ -34,6 +34,8 @@ import {
     addPosDeviceHandler, 
     addReceivingAccountHandler, 
     findBusinessSettingHandler, 
+    removePosDeviceHandler, 
+    removeReceivingAccountHandler, 
     updateReviewSettingsHandler, 
     updateSettlementSettingsHandler, 
     updateTaxSettingsHandler 
@@ -142,10 +144,22 @@ export default function(app: Express) {
         addReceivingAccountHandler
     )
 
+    app.delete('/settings/receiving-accounts/:settingsAccountId', 
+        requiresUser,
+        requiresPermissions(['*', 'business.*', 'business.settings.*', 'business.settings.update']),
+        removeReceivingAccountHandler
+    )
+
     app.post('/settings/pos-devices', 
         requiresUser,
         requiresPermissions(['*', 'business.*', 'business.settings.*', 'business.settings.update']),
         addPosDeviceHandler
+    )
+
+    app.delete('/settings/pos-devices/:deviceId', 
+        requiresUser,
+        requiresPermissions(['*', 'business.*', 'business.settings.*', 'business.settings.update']),
+        removePosDeviceHandler
     )
 
     app.patch('/settings/taxes', 

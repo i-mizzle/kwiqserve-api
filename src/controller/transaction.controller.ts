@@ -9,7 +9,7 @@ import * as Papa from 'papaparse';
 import { orderItems } from "../service/order.service";
 
 const parseTransactionFilters = (query: any) => {
-    const { order, minAmount, maxAmount, minDate, maxDate, channel } = query; // assuming the query params are named 'name', 'price', 'startDate', and 'endDate'
+    const { order, minAmount, maxAmount, status, minDate, maxDate, channel } = query; // assuming the query params are named 'name', 'price', 'startDate', and 'endDate'
 
     const filters: any = {}; // create an empty object to hold the filters
 
@@ -21,6 +21,10 @@ const parseTransactionFilters = (query: any) => {
       filters.order = order; 
     }
   
+    if (status) {
+      filters.status = status; 
+    }
+
     if (minAmount) {
       filters.amount = { $gte: +minAmount }; 
     }
