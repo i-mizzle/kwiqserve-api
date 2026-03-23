@@ -41,7 +41,7 @@ import {
     updateTaxSettingsHandler 
 } from './controller/business-setting.controller';
 import { findBusinessSetting } from './service/business-setting.service';
-import { createMultipleTablesHandler, createTableHandler, getTableHandler, getTablesHandler, updateTableHandler } from './controller/table.controller';
+import { createMultipleTablesHandler, createTableHandler, deleteTableHandler, getTableHandler, getTablesHandler, updateTableHandler } from './controller/table.controller';
 import { bulkCreateTableSchema, createTableSchema, getTableSchema } from './schema/table.schema';
 import { deductFromCartHandler, getCartsHandler, getClientCartHandler, sendToCartHandler } from './controller/cart.controller';
 import { checkoutCartSchema, deductFromCartSchema, sendToCartSchema } from './schema/cart.schema';
@@ -397,7 +397,8 @@ export default function(app: Express) {
 
     app.delete('/tables/:tableId',
         requiresUser,
-        requiresPermissions(['*', 'business.*', 'business.tables.*', 'business.tables.delete'])
+        requiresPermissions(['*', 'business.*', 'business.tables.*', 'business.tables.delete']),
+        deleteTableHandler
     )
 
     // SHOPPING CARTS
